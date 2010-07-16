@@ -8,9 +8,9 @@ import taburet.accounting
 
 def debug(func):
     return func
-    def inner(*args, **kwargs):
-        print func.__name__, args, kwargs
-        return func(*args, **kwargs)
+    def inner(*args):
+        print func.__name__, args[1:]
+        return func(*args)
     
     return inner
 
@@ -37,7 +37,7 @@ class TransactionListTreeModel(gtk.GenericTreeModel):
     
     @debug
     def on_get_iter(self, path):
-        return path
+        return path if self.transactions else None 
     
     @debug
     def on_get_value(self, node, column):

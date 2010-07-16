@@ -152,20 +152,7 @@ class BankApp(object):
     
     def show_transactions_input_window(self, transactions):
         model = TransactionListTreeModel(transactions)
-        
-        if not self.transactions_view.get_model():
-            cell = gtk.CellRendererText()
-            column = gtk.TreeViewColumn("num", cell, text=0)
-            self.transactions_view.append_column(column)
-            
-            column = gtk.TreeViewColumn("what", cell, text=1)
-            self.transactions_view.append_column(column)
-            
-            column = gtk.TreeViewColumn("how", cell, text=2)
-            self.transactions_view.append_column(column)
-            
         self.transactions_view.set_model(model)
-        
         self.transactions_window.show()
         
     def gtk_widget_hide(self, widget, data=None):

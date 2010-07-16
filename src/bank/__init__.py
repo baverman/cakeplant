@@ -52,7 +52,7 @@ class TransactionListTreeModel(gtk.GenericTreeModel):
         elif column == 1:
             return r.what
         elif column == 2:
-            return r.amount
+            return "%.2f" % r.amount
         else:
             assert False, "Invalid column number %d" % column
     

@@ -3,6 +3,7 @@
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkWindow" id="Bank">
+    <property name="window_position">center</property>
     <signal name="destroy" handler="gtk_main_quit"/>
     <child>
       <object class="GtkVBox" id="vbox1">
@@ -107,11 +108,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button1">
+                  <object class="GtkButton" id="income_transactions">
                     <property name="label" translatable="yes">&#x41F;&#x440;&#x438;&#x445;&#x43E;&#x434;</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="clicked" handler="on_income_transactions_clicked"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -122,11 +124,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="button2">
+                  <object class="GtkButton" id="outcome_transactions">
                     <property name="label" translatable="yes">&#x420;&#x430;&#x441;&#x445;&#x43E;&#x434;</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="clicked" handler="on_outcome_transactions_clicked"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -295,14 +298,14 @@
       </object>
     </child>
   </object>
-  <object class="GtkWindow" id="Calendar">
+  <object class="GtkWindow" id="TransactionInput">
+    <property name="modal">True</property>
+    <property name="window_position">center</property>
+    <signal name="delete_event" handler="gtk_widget_hide"/>
     <child>
-      <object class="GtkCalendar" id="calendar1">
+      <object class="GtkTreeView" id="transactions">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="year">2010</property>
-        <property name="month">6</property>
-        <property name="day">13</property>
       </object>
     </child>
   </object>

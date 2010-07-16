@@ -21,7 +21,7 @@ class TransactionListTreeModel(gtk.GenericTreeModel):
 
     @debug
     def on_get_flags(self):
-        return 0
+        return gtk.TREE_MODEL_LIST_ONLY
     
     @debug
     def on_get_n_columns(self):

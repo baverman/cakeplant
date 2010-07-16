@@ -27,11 +27,13 @@ class BankApp(object):
         self.out_total = builder.get_object('out_total')
         self.begin_saldo = builder.get_object('begin_saldo')
         self.end_saldo = builder.get_object('end_saldo')
+        self.date = builder.get_object('date')
         
         self.plan = taburet.accounting.AccountsPlan()
         self.bank_acc = self.plan.get_by_name('51/1')
         
         self.date_changed(date.today())
+        self.set_date(date.today())
     
     def show_dialog(self, widget, data=None):
         pass
@@ -51,7 +53,12 @@ class BankApp(object):
         saldo = self.bank_acc.balance(None, date - timedelta(days=1))
         
         self.begin_saldo.props.label = "%.2f" % saldo.balance
-        self.end_saldo.props.label = "%.2f" % ( saldo.balance + balance.balance )
+        self.end_saldo.props.label = "%.2f" % (saldo.balance + balance.balance)
+    
+    def set_date(self, date):
+        self.date.props.year = date.year
+        self.date.props.month = date.month - 1
+        self.date.props.day = date.day
 
 BankApp()
 gtk.main()

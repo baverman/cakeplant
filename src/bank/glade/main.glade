@@ -42,6 +42,7 @@
                 <property name="month">6</property>
                 <property name="day">13</property>
                 <signal name="day_selected" handler="on_date_day_selected"/>
+                <signal name="month_changed" handler="on_date_month_changed"/>
               </object>
               <packing>
                 <property name="expand">False</property>

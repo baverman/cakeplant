@@ -121,7 +121,8 @@ class BankApp(object):
         self.plan = taburet.accounting.AccountsPlan()
         self.bank_acc = self.plan.get_by_name('51/1')
         
-        self.date_changed(date.today())
+        self.update_saldo(date.today())
+        self.on_date_month_changed(self.date)
         self.set_date(date.today())
     
     def show_dialog(self, widget, data=None):
@@ -131,9 +132,9 @@ class BankApp(object):
         gtk.main_quit()
 
     def on_date_day_selected(self, widget, data=None):
-        self.date_changed(self.get_date())
+        self.update_saldo(self.get_date())
         
-    def date_changed(self, date):
+    def update_saldo(self, date):
         balance = self.bank_acc.balance(date, date)
         
         self.in_total.props.label = "%.2f" % balance.debet
@@ -144,6 +145,8 @@ class BankApp(object):
         self.begin_saldo.props.label = "%.2f" % saldo.balance
         self.end_saldo.props.label = "%.2f" % (saldo.balance + balance.balance)
         
+    def on_date_month_changed(self, widget):
+        date = self.get_date()
         self.date.clear_marks()
         map(self.date.mark_day, get_month_transaction_days(self.bank_acc, date.year, date.month))
     

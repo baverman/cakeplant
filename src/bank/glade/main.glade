@@ -332,8 +332,11 @@
                 <property name="resizable">True</property>
                 <property name="title">what</property>
                 <child>
-                  <object class="GtkCellRendererText" id="cellrenderertext2"/>
+                  <object class="GtkCellRendererText" id="cellrenderertext2">
+                    <signal name="editing_started" handler="editing_started" after="yes"/>
+                  </object>
                   <attributes>
+                    <attribute name="editable">3</attribute>
                     <attribute name="text">1</attribute>
                   </attributes>
                 </child>
@@ -343,8 +346,11 @@
               <object class="GtkTreeViewColumn" id="treeviewcolumn3">
                 <property name="title">how</property>
                 <child>
-                  <object class="GtkCellRendererText" id="cellrenderertext3"/>
+                  <object class="GtkCellRendererText" id="cellrenderertext3">
+                    <signal name="editing_started" handler="editing_started" after="yes"/>
+                  </object>
                   <attributes>
+                    <attribute name="editable">3</attribute>
                     <attribute name="text">2</attribute>
                   </attributes>
                 </child>

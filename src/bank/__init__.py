@@ -5,6 +5,7 @@ import gtk, gobject
 pygtk.require("2.0") 
 
 import taburet.accounting
+from .model import make_month_transaction_days_getter
 
 def debug(func):
     return func
@@ -13,6 +14,13 @@ def debug(func):
         return func(*args)
     
     return inner
+
+get_month_transaction_days = None
+
+def set_db_for_models(db):
+    global get_month_transaction_days
+    get_month_transaction_days = make_month_transaction_days_getter(db)
+    
 
 class TransactionListTreeModel(gtk.GenericTreeModel):
     def __init__(self, transactions):
@@ -29,7 +37,7 @@ class TransactionListTreeModel(gtk.GenericTreeModel):
     
     @debug
     def on_get_column_type(self, index):
-        return gobject.TYPE_STRING
+        return (gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_BOOLEAN)[index]
     
     @debug
     def on_get_path(self, node):
@@ -53,6 +61,8 @@ class TransactionListTreeModel(gtk.GenericTreeModel):
             return r.what
         elif column == 2:
             return "%.2f" % r.amount
+        elif column == 3:
+            return True
         else:
             assert False, "Invalid column number %d" % column
     
@@ -133,6 +143,9 @@ class BankApp(object):
         
         self.begin_saldo.props.label = "%.2f" % saldo.balance
         self.end_saldo.props.label = "%.2f" % (saldo.balance + balance.balance)
+        
+        self.date.clear_marks()
+        map(self.date.mark_day, get_month_transaction_days(self.bank_acc, date.year, date.month))
     
     def set_date(self, date):
         self.date.props.year = date.year
@@ -158,3 +171,11 @@ class BankApp(object):
     def gtk_widget_hide(self, widget, data=None):
         widget.hide()
         return True
+    
+    def editing_started(self, renderer, editable, path, data=None):
+        editable.connect('key-release-event', self.check_and_change_editable)
+        editable.renderer = renderer
+        
+    def check_and_change_editable(self, widget, event, data=None):
+        if event.keyval == gtk.keysyms.Return:
+            print widget.renderer

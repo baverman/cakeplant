@@ -7,6 +7,8 @@ pygtk.require("2.0")
 import taburet.accounting
 from .model import make_month_transaction_days_getter
 
+from taburet.ui import process_focus_like_access, CommonApp
+
 def debug(func):
     return func
     def inner(*args):
@@ -101,7 +103,7 @@ class TransactionListTreeModel(gtk.GenericTreeModel):
     def on_iter_parent(self, node):
         return None
 
-class BankApp(object):
+class BankApp(CommonApp):
     def __init__(self):
         builder = gtk.Builder()
         builder.add_from_file("src/bank/glade/main.glade")
@@ -125,12 +127,6 @@ class BankApp(object):
         self.on_date_month_changed(self.date)
         self.set_date(date.today())
     
-    def show_dialog(self, widget, data=None):
-        pass
-    
-    def gtk_main_quit(self, widget):
-        gtk.main_quit()
-
     def on_date_day_selected(self, widget, data=None):
         self.update_saldo(self.get_date())
         
@@ -171,36 +167,5 @@ class BankApp(object):
         self.transactions_view.set_model(model)
         self.transactions_window.show()
         
-    def gtk_widget_hide(self, widget, data=None):
-        widget.hide()
-        return True
-    
-    def editing_started(self, renderer, editable, path, data=None):
-        editable.connect('key-press-event', self.check_and_change_editable, renderer)
-        
     def edit_done(self, renderer, path, new_text):
-        current_column = self.transactions_view.get_cursor()[1]
-        columns = self.transactions_view.get_columns()
-        for i, c in enumerate(columns):
-            if c == current_column:
-                break
-            
-        if i >= len(columns):
-            return
-        
-        while True:
-            i += 1
-            if i >= len(columns):
-                model = self.transactions_view.get_model()
-                next_iter = model.iter_next(model.get_iter_from_string(path))
-                if not next_iter:
-                    break
-                
-                path = model.get_string_from_iter(next_iter)
-                i = -1
-                continue
-            
-            next_column = columns[i]
-            if next_column.get_cell_renderers()[0].props.editable:
-                self.transactions_view.set_cursor(path, next_column, True)
-                break
+        return process_focus_like_access(self.transactions_view)

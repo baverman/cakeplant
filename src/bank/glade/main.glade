@@ -334,7 +334,7 @@
                 <property name="title">what</property>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext2">
-                    <signal name="editing_started" handler="editing_started" after="yes"/>
+                    <signal name="edited" handler="edit_done" object="transactions"/>
                   </object>
                   <attributes>
                     <attribute name="editable">3</attribute>
@@ -348,7 +348,7 @@
                 <property name="title">how</property>
                 <child>
                   <object class="GtkCellRendererText" id="cellrenderertext3">
-                    <signal name="editing_started" handler="editing_started" after="yes"/>
+                    <signal name="edited" handler="edit_done" object="transactions"/>
                   </object>
                   <attributes>
                     <attribute name="editable">3</attribute>

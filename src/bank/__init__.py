@@ -176,9 +176,31 @@ class BankApp(object):
         return True
     
     def editing_started(self, renderer, editable, path, data=None):
-        editable.connect('key-release-event', self.check_and_change_editable)
-        editable.renderer = renderer
+        editable.connect('key-press-event', self.check_and_change_editable, renderer)
         
-    def check_and_change_editable(self, widget, event, data=None):
-        if event.keyval == gtk.keysyms.Return:
-            print widget.renderer
+    def edit_done(self, renderer, path, new_text):
+        current_column = self.transactions_view.get_cursor()[1]
+        columns = self.transactions_view.get_columns()
+        for i, c in enumerate(columns):
+            if c == current_column:
+                break
+            
+        if i >= len(columns):
+            return
+        
+        while True:
+            i += 1
+            if i >= len(columns):
+                model = self.transactions_view.get_model()
+                next_iter = model.iter_next(model.get_iter_from_string(path))
+                if not next_iter:
+                    break
+                
+                path = model.get_string_from_iter(next_iter)
+                i = -1
+                continue
+            
+            next_column = columns[i]
+            if next_column.get_cell_renderers()[0].props.editable:
+                self.transactions_view.set_cursor(path, next_column, True)
+                break

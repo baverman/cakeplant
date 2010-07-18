@@ -337,7 +337,6 @@
                     <signal name="edited" handler="edit_done" object="transactions"/>
                   </object>
                   <attributes>
-                    <attribute name="editable">3</attribute>
                     <attribute name="text">1</attribute>
                   </attributes>
                 </child>
@@ -351,7 +350,6 @@
                     <signal name="edited" handler="edit_done" object="transactions"/>
                   </object>
                   <attributes>
-                    <attribute name="editable">3</attribute>
                     <attribute name="text">2</attribute>
                   </attributes>
                 </child>

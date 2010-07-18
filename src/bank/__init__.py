@@ -7,15 +7,7 @@ pygtk.require("2.0")
 import taburet.accounting
 from .model import make_month_transaction_days_getter
 
-from taburet.ui import process_focus_like_access, CommonApp
-
-def debug(func):
-    return func
-    def inner(*args):
-        print func.__name__, args[1:]
-        return func(*args)
-    
-    return inner
+from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, enable_edit_for_columns
 
 get_month_transaction_days = None
 
@@ -23,85 +15,6 @@ def set_db_for_models(db):
     global get_month_transaction_days
     get_month_transaction_days = make_month_transaction_days_getter(db)
     
-
-class TransactionListTreeModel(gtk.GenericTreeModel):
-    def __init__(self, transactions):
-        gtk.GenericTreeModel.__init__(self)
-        self.transactions = transactions
-
-    @debug
-    def on_get_flags(self):
-        return gtk.TREE_MODEL_LIST_ONLY
-    
-    @debug
-    def on_get_n_columns(self):
-        return 3
-    
-    @debug
-    def on_get_column_type(self, index):
-        return (gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_STRING, gobject.TYPE_BOOLEAN)[index]
-    
-    @debug
-    def on_get_path(self, node):
-        return node
-    
-    @debug
-    def on_get_iter(self, path):
-        return path if self.transactions else None 
-    
-    @debug
-    def on_get_value(self, node, column):
-        
-        if not len(self.transactions):
-            return None
-        
-        r = self.transactions[node[0]]
-        
-        if column == 0:
-            return r.num
-        elif column == 1:
-            return r.what
-        elif column == 2:
-            return "%.2f" % r.amount
-        elif column == 3:
-            return True
-        else:
-            assert False, "Invalid column number %d" % column
-    
-    @debug
-    def on_iter_next(self, node):
-        if self.transactions:
-            next = node[0] + 1
-            if next < len(self.transactions):
-                return (next,)
-        
-        return None
-
-    @debug
-    def on_iter_children(self, node):
-        pass
-    
-    @debug
-    def on_iter_has_child(self, node):
-        return node == None
-    
-    @debug
-    def on_iter_n_children(self, node):
-        if node == None:
-            return len(self.transactions)
-        else:
-            return 0
-    
-    @debug
-    def on_iter_nth_child(self, node, n):
-        if node == None:
-            return (n,)
-        else:
-            return None
-    
-    @debug
-    def on_iter_parent(self, node):
-        return None
 
 class BankApp(CommonApp):
     def __init__(self):
@@ -163,7 +76,8 @@ class BankApp(CommonApp):
         self.show_transactions_input_window(self.bank_acc.transactions(date, date, income=True).all())
     
     def show_transactions_input_window(self, transactions):
-        model = TransactionListTreeModel(transactions)
+        model = EditableListTreeModel(transactions, (('%(num)d', gobject.TYPE_STRING), ('%(what)s', gobject.TYPE_STRING), ('%(amount).2f', gobject.TYPE_STRING)))
+        enable_edit_for_columns(self.transactions_view, 1, 2)
         self.transactions_view.set_model(model)
         self.transactions_window.show()
         

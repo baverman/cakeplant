@@ -7,7 +7,7 @@ pygtk.require("2.0")
 import taburet.accounting
 from .model import make_month_transaction_days_getter
 
-from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, enable_edit_for_columns
+from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, enable_edit_for_columns, process_edit_done, process_row_change
 
 get_month_transaction_days = None
 
@@ -76,10 +76,32 @@ class BankApp(CommonApp):
         self.show_transactions_input_window(self.bank_acc.transactions(date, date, income=True).all())
     
     def show_transactions_input_window(self, transactions):
-        model = EditableListTreeModel(transactions, (('%(num)d', gobject.TYPE_STRING), ('%(what)s', gobject.TYPE_STRING), ('%(amount).2f', gobject.TYPE_STRING)))
-        enable_edit_for_columns(self.transactions_view, 1, 2)
+        model = EditableListTreeModel(transactions,
+            (('num', '%d', gobject.TYPE_STRING), ('what', '%s', gobject.TYPE_STRING), ('amount', '%.2f', gobject.TYPE_STRING)),
+            on_row_change=self.save_transaction,
+            empty=self.new_transaction)
+        enable_edit_for_columns(self.transactions_view, what=1, amount=2)
         self.transactions_view.set_model(model)
         self.transactions_window.show()
         
-    def edit_done(self, renderer, path, new_text):
+    def transactions_edit_done(self, renderer, path, new_text):
+        process_edit_done(self.transactions_view, new_text)
         return process_focus_like_access(self.transactions_view)
+    
+    def transactions_cursor_changed(self, treeview):
+        return process_row_change(treeview)
+    
+    def new_transaction(self):
+        tran = taburet.accounting.Transaction()
+        tran.num = -1
+        tran.what = ''
+        
+        return tran 
+    
+    def save_transaction(self, model, row, data):
+        for k, v in data.items():
+            if k == 'what':
+                row.what = v
+            elif k == 'amount':
+                row.amount = float(v)
+        row.save()

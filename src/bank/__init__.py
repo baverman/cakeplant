@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime, date, timedelta
 
 import pygtk
@@ -7,7 +8,7 @@ pygtk.require("2.0")
 import taburet.accounting
 from .model import make_month_transaction_days_getter
 
-from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, enable_edit_for_columns, process_edit_done, process_row_change
+from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, init_editable_treeview
 
 get_month_transaction_days = None
 
@@ -68,40 +69,61 @@ class BankApp(CommonApp):
         return datetime(self.date.props.year, self.date.props.month + 1, self.date.props.day)
     
     def on_outcome_transactions_clicked(self, widget):
-        date = self.get_date()
-        self.show_transactions_input_window(self.bank_acc.transactions(date, date, outcome=True).all())
+        self.show_transactions_input_window(False)
     
     def on_income_transactions_clicked(self, widget):
+        self.show_transactions_input_window(True)
+    
+    def show_transactions_input_window(self, inout):
         date = self.get_date()
-        self.show_transactions_input_window(self.bank_acc.transactions(date, date, income=True).all())
-    
-    def show_transactions_input_window(self, transactions):
-        model = EditableListTreeModel(transactions,
-            (('num', '%d', gobject.TYPE_STRING), ('what', '%s', gobject.TYPE_STRING), ('amount', '%.2f', gobject.TYPE_STRING)),
-            on_row_change=self.save_transaction,
-            empty=self.new_transaction)
-        enable_edit_for_columns(self.transactions_view, what=1, amount=2)
-        self.transactions_view.set_model(model)
-        self.transactions_window.show()
+        transactions = self.bank_acc.transactions(date, date, income=inout, outcome=not inout).all()
         
-    def transactions_edit_done(self, renderer, path, new_text):
-        process_edit_done(self.transactions_view, new_text)
-        return process_focus_like_access(self.transactions_view)
-    
-    def transactions_cursor_changed(self, treeview):
-        return process_row_change(treeview)
+        model = EditableListTreeModel(transactions,
+            to_string=self.transaction_to_string(inout),
+            on_row_change=self.save_transaction(inout),
+            empty=self.new_transaction)
+        
+        init_editable_treeview(self.transactions_view, model,
+            editable=('c_account', 'c_who', 'c_amount', 'c_what'),
+            noneditable=('c_num',))
+        
+        self.transactions_window.show()
+
+    def transaction_to_string(self, inout):
+        def inner(row, cname):
+            if cname == 'c_num':
+                return getattr(row, 'num', 'None')
+            elif cname == 'c_account':
+                acc = row.from_acc if inout else row.to_acc
+                if acc:
+                    return taburet.accounting.Account.get(acc[-1]).name
+                else:
+                    return ''
+            elif cname == 'c_who':
+                return row.who
+            elif cname == 'c_amount':
+                return "%.2f" % row.amount
+            elif cname == 'c_what':
+                return row.what
+            else:
+                raise Exception("Unknown column %s" % cname)
+
+        return inner
     
     def new_transaction(self):
         tran = taburet.accounting.Transaction()
-        tran.num = -1
         tran.what = ''
+        tran.who = ''
         
         return tran 
     
-    def save_transaction(self, model, row, data):
-        for k, v in data.items():
-            if k == 'what':
-                row.what = v
-            elif k == 'amount':
-                row.amount = float(v)
-        row.save()
+    def save_transaction(self, inout):
+        def inner(model, row, data):
+            for k, v in data.items():
+                if k == 'what':
+                    row.what = v
+                elif k == 'amount':
+                    row.amount = float(v)
+            row.save()
+            
+        return inner

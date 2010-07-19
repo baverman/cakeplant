@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys, os.path
-import py.test #@UnresolvedImport
 
 from couchdbkit import Server, MultipleResultsFound
 

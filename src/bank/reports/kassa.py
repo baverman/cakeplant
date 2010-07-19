@@ -1,10 +1,34 @@
 # -*- coding: utf-8 -*-
 
-from pyExcelerator import Workbook
+from pyExcelerator import Workbook, XFStyle
 import taburet.accounting
 from datetime import timedelta
 from itertools import groupby
 
+def get_border_style(r1, r2, c1, c2, r, c, inwidth, outwidth, cache={}):
+    istop = r == r1
+    isbottom = r == r2
+    isleft = c == c1
+    isright = c == c2
+    
+    key = (istop, isbottom, isleft, isright)
+    
+    if not key in cache:
+        style = XFStyle()
+        style.borders.top = outwidth if istop else inwidth
+        style.borders.bottom = outwidth if isbottom else inwidth
+        style.borders.right = outwidth if isright else inwidth
+        style.borders.left = outwidth if isleft else inwidth
+        
+        cache[key] = style
+    
+    return cache[key]
+
+def set_borders(sh, r1, r2, c1, c2, inwidth=1, outwidth=2):
+    for r in range(r1, r2 + 1):
+        for c in range(c1, c2 +1):
+            sh.write(r,c, style=get_border_style(r1, r2, c1, c2, r, c, inwidth, outwidth))
+            
 def fill_transactions(sh, sr, sc, transactions):
     for i, r in enumerate(transactions):
         sh.write(sr+i, sc+0, r.num)
@@ -83,6 +107,14 @@ def do(account, date, filename):
     sh.write(total_row, 0, u'ИТОГО')
     fill_total(sh, total_row, 3, in_transactions)
     fill_total(sh, total_row, 8, out_transactions)
+
+    set_borders(sh, 2, 3, 0, 4)
+    set_borders(sh, 4, total_row - 1, 0, 4)
+    set_borders(sh, total_row, total_row, 0, 4)
+
+    set_borders(sh, 2, 3, 5, 9)
+    set_borders(sh, 4, total_row - 1, 5, 9)
+    set_borders(sh, total_row, total_row, 5, 9)
     
     fill_amounts_grouped_by_account(sh, total_row + 2, 1, in_transactions)
     fill_amounts_grouped_by_account(sh, total_row + 2, 6, out_transactions)

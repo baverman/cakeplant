@@ -1,34 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from pyExcelerator import Workbook, XFStyle
+from pyExcelerator import Workbook
 import taburet.accounting
 from datetime import timedelta
 from itertools import groupby
 
-def get_border_style(r1, r2, c1, c2, r, c, inwidth, outwidth, cache={}):
-    istop = r == r1
-    isbottom = r == r2
-    isleft = c == c1
-    isright = c == c2
-    
-    key = (istop, isbottom, isleft, isright)
-    
-    if not key in cache:
-        style = XFStyle()
-        style.borders.top = outwidth if istop else inwidth
-        style.borders.bottom = outwidth if isbottom else inwidth
-        style.borders.right = outwidth if isright else inwidth
-        style.borders.left = outwidth if isleft else inwidth
-        
-        cache[key] = style
-    
-    return cache[key]
+from . import set_borders
 
-def set_borders(sh, r1, r2, c1, c2, inwidth=1, outwidth=2):
-    for r in range(r1, r2 + 1):
-        for c in range(c1, c2 +1):
-            sh.write(r,c, style=get_border_style(r1, r2, c1, c2, r, c, inwidth, outwidth))
-            
 def fill_transactions(sh, sr, sc, transactions):
     for i, r in enumerate(transactions):
         sh.write(sr+i, sc+0, r.num)
@@ -41,7 +19,7 @@ def fill_transactions(sh, sr, sc, transactions):
 
 def fill_total(sh, r, c, transactions):
     total = sum(r.amount for r in transactions)
-    sh.write(r, c, u'%.2f' % total)
+    sh.write(r, c, total)
 
 def fill_amounts_grouped_by_account(sh, sr, sc, transactions):
     data = {}
@@ -73,12 +51,12 @@ def do(account, date, filename):
     
     sh = book.add_sheet(u'касса')
 
-    begin_saldo = account.balance(None, date - timedelta(days=1))
-    end_saldo = account.balance(None, date)
-
-    
     sh.write_merge(0,0,0,9, date.strftime('Касса за %d %B %Y').decode('utf8'))
+
+    begin_saldo = account.balance(None, date - timedelta(days=1))
     sh.write(1,0, u'Сальдо на начало %.2f' % begin_saldo.balance)
+    
+    end_saldo = account.balance(None, date)
     sh.write(1,5, u'Сальдо на конец %.2f' % end_saldo.balance)
     
     sh.write_merge(2,2,0,4, u'Приход')

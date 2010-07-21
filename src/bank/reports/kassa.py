@@ -5,7 +5,7 @@ import taburet.accounting
 from datetime import timedelta
 from itertools import groupby
 
-from . import set_borders
+from . import Range, Cell
 
 def fill_transactions(sh, sr, sc, transactions):
     for i, r in enumerate(transactions):
@@ -25,7 +25,10 @@ def fill_amounts_grouped_by_account(sh, sr, sc, transactions):
     data = {}
     
     for k, g in groupby(transactions, lambda t: t.account):
-        data[k] = sum(r.amount for r in g)    
+        if k in data:
+            data[k] += sum(r.amount for r in g)
+        else:
+            data[k] = sum(r.amount for r in g)
 
     for i, account in enumerate(sorted(data.keys())):
         sh.write(sr+i, sc, account)
@@ -86,13 +89,13 @@ def do(account, date, filename):
     fill_total(sh, total_row, 3, in_transactions)
     fill_total(sh, total_row, 8, out_transactions)
 
-    set_borders(sh, 2, 3, 0, 4)
-    set_borders(sh, 4, total_row - 1, 0, 4)
-    set_borders(sh, total_row, total_row, 0, 4)
+    Range(sh, 2, 3, 0, 4).set_borders()
+    Range(sh, 4, total_row - 1, 0, 4).set_borders()
+    Range(sh, total_row, total_row, 0, 4).set_borders()
 
-    set_borders(sh, 2, 3, 5, 9)
-    set_borders(sh, 4, total_row - 1, 5, 9)
-    set_borders(sh, total_row, total_row, 5, 9)
+    Range(sh, 2, 3, 5, 9).set_borders()
+    Range(sh, 4, total_row - 1, 5, 9).set_borders()
+    Range(sh, total_row, total_row, 5, 9).set_borders()
     
     fill_amounts_grouped_by_account(sh, total_row + 2, 1, in_transactions)
     fill_amounts_grouped_by_account(sh, total_row + 2, 6, out_transactions)

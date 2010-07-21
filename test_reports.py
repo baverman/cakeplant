@@ -5,7 +5,7 @@ sys.path.append('./src')
 
 from datetime import date
 
-#import bank.reports.kassa
+import bank.reports.kassa
 import bank.reports.month
 
 from taburet.utils import sync_design_documents
@@ -24,6 +24,6 @@ bank.set_db_for_models(db)
 plan = taburet.accounting.AccountsPlan()
 account = plan.get_by_name('51/1')
 
-#bank.reports.kassa.do(account, date(2010, 5, 4), '/tmp/wow.xls')
-report = bank.reports.month.do(account, date(2010, 4, 4), False)
+report = bank.reports.kassa.do(account, date(2010, 5, 4))
+#report = bank.reports.month.do(account, date(2010, 4, 4), False)
 taburet.report.excel.save(report, '/tmp/wow.xls')

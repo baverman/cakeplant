@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pyExcelerator import XFStyle
+from pyExcelerator import XFStyle, Style
 
 def get_private_attr(obj, name):
     return getattr(obj, '_%s__%s' % (obj.__class__.__name__, name))
@@ -22,7 +22,7 @@ def get_style(style_col, xf_index):
         return None
         
     font_idx, num_format_idx, alignment, borders, pattern, protection = find_key(style_col._xf, xf_index)
-    
+
     newstyle.num_format_str  = find_key(style_col._num_formats, num_format_idx)
     newstyle.font            = find_key(style_col._fonts, font_idx).copy()
     newstyle.alignment       = alignment.copy()
@@ -124,3 +124,25 @@ class Cell(object):
         set_cell_style(self.sheet, self.style_col, self.r, self.c, style)
         
     style = property(__get_style, __set_style)
+    
+def set_style_for_book(book, format=None, alignment=None):
+    style_col = get_private_attr(book, 'styles')
+    
+    data = {}
+    for xf, xf_index in style_col._xf.items():
+        font_idx, num_format_idx, old_alignment, borders, pattern, protection = xf
+        if format:
+            if format in style_col._num_formats:
+                new_format_idx = style_col._num_formats[format]
+            else:
+                new_format_idx = 163 + len(style_col._num_formats) - len(Style.StyleCollection._std_num_fmt_list)
+                style_col._num_formats[format] = new_format_idx
+        else:
+            new_format_idx = num_format_idx
+        
+        new_alignment = alignment if alignment else old_alignment
+        
+        new_xf = (font_idx, new_format_idx, new_alignment, borders, pattern, protection)
+        data[new_xf] = xf_index
+        
+    style_col._xf = data

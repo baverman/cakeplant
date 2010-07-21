@@ -23,4 +23,4 @@ plan = taburet.accounting.AccountsPlan()
 account = plan.get_by_name('51/1')
 
 #bank.reports.kassa.do(account, date(2010, 5, 4), '/tmp/wow.xls')
-bank.reports.month.do(account, date(2010, 4, 4), True, '/tmp/wow.xls') 
+bank.reports.month.do(account, date(2010, 4, 4), False, '/tmp/wow.xls') 

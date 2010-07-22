@@ -61,17 +61,12 @@ def do(account, date):
     sh[2:0].style.align.horz.center()
     sh[2:5].style.align.horz.center()        
     
-    sh[3:0].value = '№'
-    sh[3:1].value = 'Счет'
-    sh[3:2].value = 'Кто'
-    sh[3:3].value = 'Сколько'
-    sh[3:4].value = 'За что'
-    
-    sh[3:5].value = '№'
-    sh[3:6].value = 'Счет'
-    sh[3:7].value = 'Кто'
-    sh[3:8].value = 'Сколько'
-    sh[3:9].value = 'За что'
+    for sc in (0, 5):
+        sh[3:0+sc].value = '№'
+        sh[3:1+sc].value = 'Счет'
+        sh[3:2+sc].value = 'Кто'
+        sh[3:3+sc].value = 'Сколько'
+        sh[3:4+sc].value = 'За что'
     
     in_transactions = get_transactions(account, date, income=True)
     fill_transactions(sh, 4, 0, in_transactions)
@@ -101,13 +96,8 @@ def do(account, date):
     with sh.style as style:
         style.align.vert.center()
         style.format = '0.00'
+    
+    for column in (0, 1, 2, 5, 6, 7):
+        sh[:column].autofit(3)
         
-    sh[:0].autofit(3)
-    sh[:1].autofit(3)
-    sh[:2].autofit(3)
-    
-    sh[:5].autofit(3)
-    sh[:6].autofit(3)
-    sh[:7].autofit(3)    
-    
     return book

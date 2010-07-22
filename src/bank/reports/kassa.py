@@ -4,7 +4,7 @@ import taburet.accounting
 from datetime import timedelta
 from itertools import groupby
 
-from taburet.report import Workbook
+from taburet.report import Workbook, group_sum
 
 def fill_transactions(sh, sr, sc, transactions):
     for i, r in enumerate(transactions):
@@ -22,10 +22,7 @@ def fill_amounts_grouped_by_account(sh, sr, sc, transactions):
     data = {}
     
     for k, g in groupby(transactions, lambda t: t.account):
-        if k in data:
-            data[k] += sum(r.amount for r in g)
-        else:
-            data[k] = sum(r.amount for r in g)
+        group_sum(data, k, sum(r.amount for r in g))
 
     for i, account in enumerate(sorted(data.keys())):
         sh[sr+i:sc].value = account

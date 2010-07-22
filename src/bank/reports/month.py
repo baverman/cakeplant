@@ -5,7 +5,7 @@ import taburet.accounting
 from datetime import timedelta
 from itertools import groupby
 
-from taburet.report import Workbook
+from taburet.report import Workbook, group_sum
 
 def fill_transactions(sh, sr, pivot, days):
     last_column = 1 + len(days)
@@ -35,10 +35,7 @@ def fill_transactions(sh, sr, pivot, days):
                 acc_total += amount
                 who_total += amount
                 
-                if day in days_totals:
-                    days_totals[day] += amount
-                else:
-                    days_totals[day] = amount
+                group_sum(days_totals, day, amount)
                 
                 sh[i:2 + days[day]].value = amount
                 

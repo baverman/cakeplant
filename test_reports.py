@@ -24,6 +24,6 @@ bank.set_db_for_models(db)
 plan = taburet.accounting.AccountsPlan()
 account = plan.get_by_name('51/1')
 
-report = bank.reports.kassa.do(account, date(2010, 5, 4))
-#report = bank.reports.month.do(account, date(2010, 4, 4), True)
+#report = bank.reports.kassa.do(account, date(2010, 5, 4))
+report = bank.reports.month.do(account, date(2010, 4, 4), True)
 taburet.report.excel.save(report, '/tmp/wow.xls')

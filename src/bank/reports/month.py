@@ -7,33 +7,64 @@ from itertools import groupby
 
 from taburet.report import Workbook
 
-def fill_transactions(sh, sr, sc, pivot, days):
+def fill_transactions(sh, sr, pivot, days):
+    last_column = 1 + len(days)
     for d, c in days.items():
-        sh[sr:sc + 2 + c].value = str(d)
+        sh[sr:2 + c].value = str(d)
 
-    with sh.range(sr, sr, sc + 2, sc + 1 + len(days)).style as style:
-        style.align.horz.center()
+    sh.range(sr, sr, 2, last_column).style.align.horz.center()
     
-    sh[sr:sc+0].set_borders()
-    sh[sr:sc+1].set_borders()
-    sh.range(sr, sr, sc + 2, sc + 1 + len(days)).set_borders()
+    sh[sr:0].set_borders()
+    sh[sr:1].set_borders()
+    sh.range(sr, sr, 2, last_column).set_borders()
+    
+    sh[sr:last_column+1].value = 'Итого'
+    sh[sr:last_column+1].set_borders()
+    
+    days_totals = {}
     
     i = sr + 1
     for acc in sorted(pivot.keys()):
-        sh[i:sc+0].value = acc
+        sh[i:0].value = acc
         start = i
+        acc_total = 0
         for who in sorted(pivot[acc].keys()):
-            sh[i:sc+1].value = who
+            sh[i:1].value = who
+            who_total = 0
             for day, amount in pivot[acc][who].items():
-                sh[i:sc + 2 + days[day]].value = amount
+                acc_total += amount
+                who_total += amount
+                
+                if day in days_totals:
+                    days_totals[day] += amount
+                else:
+                    days_totals[day] = amount
+                
+                sh[i:2 + days[day]].value = amount
+                
+            sh[i:last_column+1].value = who_total
                 
             i += 1
+        
+        if len(pivot[acc]) > 1:
+            sh[i-1:last_column+2].value = acc_total
 
         sh.range(start, i - 1, 0, 0).set_borders(0)
         sh.range(start, i - 1, 1, 1).set_borders()
-        sh.range(start, i - 1, 2, 1 + len(days)).set_borders()
+        sh.range(start, i - 1, 2, last_column).set_borders()
+        sh.range(start, i - 1, last_column + 1, last_column + 1).set_borders()
     
-    return i - 1
+    # fill total_row
+    
+    sh[i:0].value = 'Итого'
+    sh[i:last_column + 1].value = sum(days_totals.values())
+    
+    sh.range(i,i,0,1).set_borders(0)
+    sh.range(i, i, 2, last_column).set_borders()
+    sh[i:last_column+1].set_borders()
+    
+    for day, amount in days_totals.items():
+        sh[i:2 + days[day]].value = amount    
 
 def fill_total(sh, r, c, transactions):
     total = sum(r.amount for r in transactions)
@@ -55,7 +86,7 @@ def get_pivot(account, date_from, date_to, inout):
         for who, gg in groupby(g, lambda t: t.who):
             for day, ggg in groupby(gg, lambda t: t.date.day):
                 days[day] = True
-                accounts.setdefault(aname, {}).setdefault(who, {})[day] = sum(t.amount for t in ggg)
+                accounts.setdefault(aname, {}).setdefault(who, {})[day] = sum(t.amount for t in ggg) 
             
     days_indexes = dict((day, i) for i, day in enumerate(sorted(days.keys())))
     
@@ -81,7 +112,7 @@ def do(account, date, inout):
     
     pivot, days = get_pivot(account, date_from, date_to, inout)
     
-    fill_transactions(sh, 2, 0, pivot, days)
+    fill_transactions(sh, 2, pivot, days)
     
     with sh.style as style:
         style.align.vert.center()

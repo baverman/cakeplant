@@ -61,11 +61,8 @@ def do(account, date):
     sh.merge(2,2,0,4).value = 'Приход'
     sh.merge(2,2,5,9).value = 'Расход'
     
-    with sh[2:0].pstyle as style:
-        style.align.horz.center()
-        
-    with sh[2:5].pstyle as style:
-        style.align.horz.center()
+    sh[2:0].style.align.horz.center()
+    sh[2:5].style.align.horz.center()        
     
     sh[3:0].value = '№'
     sh[3:1].value = 'Счет'

@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from taburet.utils import sync_design_documents
-import taburet.accounting
+from taburet.accounts import AccountsPlan, Account
+from taburet import PackageManager
 
 import couchdbkit
 import csv, datetime
 
 s = couchdbkit.Server()
 db = s.get_or_create_db('demo')
+pm = PackageManager()
+pm.use('taburet.accounts')
+pm.set_db(db, 'taburet.accounts', 'taburet.transactions')
+pm.sync_design_documents()
 
-sync_design_documents(db, ('taburet.counter', 'taburet.accounting'))
-taburet.accounting.set_db_for_models(db)
-
-plan = taburet.accounting.model.AccountsPlan()
+plan = AccountsPlan()
 def get_or_create_account(name):
     result = plan.get_by_name(name)
     if result:
@@ -68,4 +69,4 @@ for r in data:
     tran.who = who
     tran.num = num
     
-    tran.save()  
+    tran.save()

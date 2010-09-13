@@ -5,17 +5,22 @@ import pygtk
 import gtk, gobject
 pygtk.require("2.0") 
 
-import taburet.accounting
-from .model import make_month_transaction_days_getter
+from taburet.accounts import AccountsPlan, Account
+from taburet.transactions import Transaction
+from model import make_month_transaction_days_getter
 
 from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, init_editable_treeview
 
 get_month_transaction_days = None
 
-def set_db_for_models(db):
-    global get_month_transaction_days
-    get_month_transaction_days = make_month_transaction_days_getter(db)
+class DbSetter(object):
+    @staticmethod
+    def set_db(db):
+        global get_month_transaction_days
+        get_month_transaction_days = make_month_transaction_days_getter(db)
     
+
+set_db = (DbSetter,)
 
 class BankApp(CommonApp):
     def __init__(self):
@@ -34,7 +39,7 @@ class BankApp(CommonApp):
         self.transactions_window = builder.get_object('TransactionInput')
         self.transactions_view = builder.get_object('transactions')
         
-        self.plan = taburet.accounting.AccountsPlan()
+        self.plan = AccountsPlan()
         self.bank_acc = self.plan.get_by_name('51/1')
         
         self.update_saldo(date.today())
@@ -96,7 +101,7 @@ class BankApp(CommonApp):
             elif cname == 'c_account':
                 acc = row.from_acc if inout else row.to_acc
                 if acc:
-                    return taburet.accounting.Account.get(acc[-1]).name
+                    return Account.get(acc[-1]).name
                 else:
                     return ''
             elif cname == 'c_who':
@@ -111,7 +116,7 @@ class BankApp(CommonApp):
         return inner
     
     def new_transaction(self):
-        tran = taburet.accounting.Transaction()
+        tran = Transaction()
         tran.what = ''
         tran.who = ''
         
@@ -120,10 +125,12 @@ class BankApp(CommonApp):
     def save_transaction(self, inout):
         def inner(model, row, data):
             for k, v in data.items():
-                if k == 'what':
+                if k == 'c_what':
                     row.what = v
-                elif k == 'amount':
+                elif k == 'c_amount':
                     row.amount = float(v)
             row.save()
+            
+            self.update_saldo(self.get_date())
             
         return inner

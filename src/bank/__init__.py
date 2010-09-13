@@ -5,7 +5,7 @@ import pygtk
 import gtk, gobject
 pygtk.require("2.0") 
 
-from taburet.accounts import AccountsPlan, Account
+from taburet.accounts import AccountsPlan, Account, accounts_walk 
 from taburet.transactions import Transaction
 from model import make_month_transaction_days_getter
 
@@ -23,6 +23,104 @@ class DbSetter(object):
 set_db = (DbSetter,)
 same_db = 'taburet.transactions'
 module_deps = ('taburet.accounts', )
+
+class DocColumn(object):
+    def __init__(self, attr, editable=True):
+        self.attr = attr
+        self.editable = editable
+        
+    def to_string(self, row):
+        return self.value_to_string(getattr(row, self.attr, None))
+    
+    def get_properties(self):
+        return {'editable': self.editable}
+
+
+class TextDocColumn(DocColumn):
+    def from_string(self, value):
+        return value
+    
+    def value_to_string(self, value):
+        return value
+
+
+class AccountColumn(DocColumn):
+    def __init__(self, attr, choices, editable=True):
+        DocColumn.__init__(self, attr, editable)
+        self.choices = choices
+                
+    def from_string(self, value):
+        return value
+    
+    def value_to_string(self, value):
+        if not value:
+            return ''
+    
+        for k, v in self.choices:
+            if k == value[-1]:
+                return v
+    
+        return 'Undef'
+    
+    def get_properties(self):
+        props = DocColumn.get_properties(self)
+        model = gtk.ListStore(str)
+        
+        for k, v in self.choices:
+            model.append((v,))
+            
+        props['model'] = model
+        props['text-column'] = 0
+        
+        return props
+
+
+class IntegerDocColumn(DocColumn):
+    def from_string(self, value):
+        return int(value)
+    
+    def value_to_string(self, value):
+        return str(value)
+
+
+class FloatDocColumn(DocColumn):
+    def __init__(self, attr, format='%.2f', editable=True):
+        DocColumn.__init__(self, attr, editable)
+        self.format = format
+        
+    def from_string(self, value):
+        return float(value)
+    
+    def value_to_string(self, value):
+        return self.format % value
+
+class TransactionModel(object):
+    def __init__(self, inout):
+        self.inout = inout
+
+        choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
+
+        self.c_num = IntegerDocColumn('num', editable=False)
+        self.c_account = AccountColumn('from_acc' if inout else 'to_acc', choices)
+        self.c_who = TextDocColumn('who')
+        self.c_amount = FloatDocColumn('amount')
+        self.c_what = TextDocColumn('what')
+
+    def new(self):
+        tran = Transaction()
+        tran.what = ''
+        tran.who = ''
+        
+        return tran 
+
+    def row_changed(self, model, row, data):
+        if data:
+            if 'c_what' in data:
+                row.what = data['c_what']
+            if 'c_amount' in data:
+                row.amount = data['c_amount']
+            row.save()
+    
 
 class BankApp(CommonApp):
     def __init__(self):
@@ -88,52 +186,7 @@ class BankApp(CommonApp):
         date = self.get_date()
         transactions = self.bank_acc.transactions(date, date, income=inout, outcome=not inout).all()
         
-        model = EditableListTreeModel(transactions,
-            to_string=self.transaction_to_string(inout),
-            on_row_change=self.save_transaction(inout),
-            empty=self.new_transaction)
-        
-        init_editable_treeview(self.transactions_view, model,
-            editable=('c_account', 'c_who', 'c_amount', 'c_what'),
-            noneditable=('c_num',))
+        model = EditableListTreeModel(transactions, TransactionModel(inout))
+        init_editable_treeview(self.transactions_view, model)
         
         self.transactions_window.show()
-
-    def transaction_to_string(self, inout):
-        def inner(row, cname):
-            if cname == 'c_num':
-                return getattr(row, 'num', 'None')
-            elif cname == 'c_account':
-                acc = row.from_acc if inout else row.to_acc
-                if acc:
-                    return Account.get(acc[-1]).name
-                else:
-                    return ''
-            elif cname == 'c_who':
-                return row.who
-            elif cname == 'c_amount':
-                return "%.2f" % row.amount
-            elif cname == 'c_what':
-                return row.what
-            else:
-                raise Exception("Unknown column %s" % cname)
-
-        return inner
-    
-    def new_transaction(self):
-        tran = Transaction()
-        tran.what = ''
-        tran.who = ''
-        
-        return tran 
-    
-    def save_transaction(self, inout):
-        def inner(model, row, data):
-            for k, v in data.items():
-                if k == 'c_what':
-                    row.what = v
-                elif k == 'c_amount':
-                    row.amount = float(v)
-            row.save()
-            
-        return inner

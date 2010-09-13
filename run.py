@@ -13,8 +13,8 @@ s = couchdbkit.Server()
 db = s.get_or_create_db('demo')
 
 pm = PackageManager()
-pm.use('taburet.transactions', 'taburet.accounts', 'bank')
-pm.set_db(db, 'taburet.transactions', 'taburet.accounts', 'bank')
+pm.use('bank')
+pm.set_db(db, 'taburet.transactions', 'taburet.accounts')
 pm.sync_design_documents()
 
 bank.BankApp()

@@ -21,6 +21,8 @@ class DbSetter(object):
     
 
 set_db = (DbSetter,)
+same_db = 'taburet.transactions'
+module_deps = ('taburet.accounts', )
 
 class BankApp(CommonApp):
     def __init__(self):
@@ -78,7 +80,10 @@ class BankApp(CommonApp):
     
     def on_income_transactions_clicked(self, widget):
         self.show_transactions_input_window(True)
-    
+
+    def on_transaction_input_hide(self, *args):    
+        self.update_saldo(self.get_date())
+        
     def show_transactions_input_window(self, inout):
         date = self.get_date()
         transactions = self.bank_acc.transactions(date, date, income=inout, outcome=not inout).all()
@@ -130,7 +135,5 @@ class BankApp(CommonApp):
                 elif k == 'c_amount':
                     row.amount = float(v)
             row.save()
-            
-            self.update_saldo(self.get_date())
             
         return inner

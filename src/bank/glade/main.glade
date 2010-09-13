@@ -306,6 +306,7 @@
     <property name="default_width">500</property>
     <property name="default_height">700</property>
     <property name="type_hint">dialog</property>
+    <signal name="hide" handler="on_transaction_input_hide"/>
     <signal name="delete_event" handler="gtk_widget_hide"/>
     <child>
       <object class="GtkScrolledWindow" id="scrolledwindow1">
@@ -331,7 +332,7 @@
               <object class="GtkTreeViewColumn" id="c_account">
                 <property name="title">&#x421;&#x447;&#x435;&#x442;</property>
                 <child>
-                  <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                  <object class="GtkCellRendererCombo" id="cellrenderertext4"/>
                 </child>
               </object>
             </child>

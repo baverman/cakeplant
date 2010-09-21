@@ -102,9 +102,11 @@ class FloatDocColumn(DocColumn):
         return self.format % value
 
 class TransactionModel(object):
-    def __init__(self, inout):
+    def __init__(self, inout, other_account, dt):
         self.inout = inout
-
+        self.other_account = other_account
+        self.dt = dt
+              
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
         self.c_num = IntegerDocColumn('num', editable=False)
@@ -117,13 +119,22 @@ class TransactionModel(object):
         tran = Transaction()
         tran.what = ''
         tran.who = ''
+        tran.date = self.dt
+
+        if self.inout:
+            tran.to_acc = self.other_account
+        else:
+            tran.from_acc = self.other_account
         
         return tran 
 
     def row_changed(self, model, row, old_values):
         if old_values:
+            if not hasattr(row, 'num'):
+                row.num = 12345
+                    
             row.save()
-    
+            print row._id
 
 class BankApp(CommonApp):
     def __init__(self):
@@ -187,9 +198,12 @@ class BankApp(CommonApp):
         
     def show_transactions_input_window(self, inout):
         date = self.get_date()
-        transactions = self.bank_acc.transactions(date, date, income=inout, outcome=not inout).all()
+        transactions = sorted(self.bank_acc.transactions(
+            date, date, income=inout, outcome=not inout), key=lambda r: r.num)
         
-        model = EditableListTreeModel(transactions, TransactionModel(inout))
+        model = EditableListTreeModel(transactions,
+            TransactionModel(inout, self.bank_acc.account_path, self.get_date()))
+        
         init_editable_treeview(self.transactions_view, model)
         
         self.transactions_window.show()

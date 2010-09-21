@@ -183,7 +183,7 @@ class BankApp(CommonApp):
         self.show_transactions_input_window(True)
 
     def on_transaction_input_hide(self, *args):    
-        self.update_saldo(self.get_date())
+        gobject.idle_add(self.update_saldo, self.get_date())
         
     def show_transactions_input_window(self, inout):
         date = self.get_date()

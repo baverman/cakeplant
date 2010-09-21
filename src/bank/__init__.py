@@ -48,7 +48,18 @@ class AccountColumn(DocColumn):
     def __init__(self, attr, choices, editable=True):
         DocColumn.__init__(self, attr, editable)
         self.choices = choices
-                
+
+        model = gtk.ListStore(str)
+        
+        for k, v in self.choices:
+            model.append((v,))
+            
+        self.completion = gtk.EntryCompletion()
+        self.completion.set_model(model)
+        self.completion.set_text_column(0)
+        self.completion.set_inline_completion(True)
+        self.completion.set_inline_selection(True)
+
     def from_string(self, value):
         return value
     
@@ -61,19 +72,11 @@ class AccountColumn(DocColumn):
                 return v
     
         return 'Undef'
-    
-    def get_properties(self):
-        props = DocColumn.get_properties(self)
-        model = gtk.ListStore(str)
-        
-        for k, v in self.choices:
-            model.append((v,))
-            
-        props['model'] = model
-        props['text-column'] = 0
-        
-        return props
 
+    def on_editing_started(self, renderer, editable, path):    
+        editable.set_completion(self.completion)
+        return False        
+        
 
 class IntegerDocColumn(DocColumn):
     def from_string(self, value):

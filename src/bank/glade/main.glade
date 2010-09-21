@@ -330,9 +330,10 @@
             </child>
             <child>
               <object class="GtkTreeViewColumn" id="c_account">
+                <property name="min_width">70</property>
                 <property name="title">&#x421;&#x447;&#x435;&#x442;</property>
                 <child>
-                  <object class="GtkCellRendererCombo" id="cellrenderertext4"/>
+                  <object class="GtkCellRendererText" id="cellrenderertext4"/>
                 </child>
               </object>
             </child>

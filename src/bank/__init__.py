@@ -31,18 +31,19 @@ class DocColumn(object):
         
     def to_string(self, row):
         return self.value_to_string(getattr(row, self.attr, None))
+
+    def from_string(self, value):
+        return value
+    
+    def value_to_string(self, value):
+        return value
     
     def get_properties(self):
         return {'editable': self.editable}
 
 
 class TextDocColumn(DocColumn):
-    def from_string(self, value):
-        return value
-    
-    def value_to_string(self, value):
-        return value
-
+    pass
 
 class AccountColumn(DocColumn):
     def __init__(self, attr, choices, editable=True):
@@ -60,9 +61,6 @@ class AccountColumn(DocColumn):
         self.completion.set_inline_completion(True)
         self.completion.set_inline_selection(True)
 
-    def from_string(self, value):
-        return value
-    
     def value_to_string(self, value):
         if not value:
             return ''
@@ -116,12 +114,24 @@ class TransactionModel(object):
         
         return tran 
 
+    def get_account(self, account_name):
+        acc = AccountsPlan().get_by_name(account_name)
+        return acc.account_path
+        
     def row_changed(self, model, row, data):
         if data:
             if 'c_what' in data:
                 row.what = data['c_what']
             if 'c_amount' in data:
                 row.amount = data['c_amount']
+            if 'c_account' in data:
+                acc = self.get_account(data['c_account'])
+                
+                if self.inout:
+                    row.from_acc = acc
+                else:
+                    row.to_acc = acc
+                    
             row.save()
     
 

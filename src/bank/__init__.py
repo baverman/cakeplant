@@ -32,7 +32,10 @@ class DocColumn(object):
     def to_string(self, row):
         return self.value_to_string(getattr(row, self.attr, None))
 
-    def from_string(self, value):
+    def from_string(self, row, value):
+        setattr(row, self.attr, self.string_to_value(value))
+
+    def string_to_value(self, value):
         return value
     
     def value_to_string(self, value):
@@ -61,6 +64,9 @@ class AccountColumn(DocColumn):
         self.completion.set_inline_completion(True)
         self.completion.set_inline_selection(True)
 
+    def string_to_value(self, value):
+        return AccountsPlan().get_by_name(value).account_path
+            
     def value_to_string(self, value):
         if not value:
             return ''
@@ -77,7 +83,7 @@ class AccountColumn(DocColumn):
         
 
 class IntegerDocColumn(DocColumn):
-    def from_string(self, value):
+    def string_to_value(self, value):
         return int(value)
     
     def value_to_string(self, value):
@@ -89,7 +95,7 @@ class FloatDocColumn(DocColumn):
         DocColumn.__init__(self, attr, editable)
         self.format = format
         
-    def from_string(self, value):
+    def string_to_value(self, value):
         return float(value)
     
     def value_to_string(self, value):
@@ -114,24 +120,8 @@ class TransactionModel(object):
         
         return tran 
 
-    def get_account(self, account_name):
-        acc = AccountsPlan().get_by_name(account_name)
-        return acc.account_path
-        
-    def row_changed(self, model, row, data):
-        if data:
-            if 'c_what' in data:
-                row.what = data['c_what']
-            if 'c_amount' in data:
-                row.amount = data['c_amount']
-            if 'c_account' in data:
-                acc = self.get_account(data['c_account'])
-                
-                if self.inout:
-                    row.from_acc = acc
-                else:
-                    row.to_acc = acc
-                    
+    def row_changed(self, model, row, old_values):
+        if old_values:
             row.save()
     
 

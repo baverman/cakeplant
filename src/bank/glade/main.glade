@@ -306,7 +306,7 @@
     <property name="modal">True</property>
     <property name="window_position">center</property>
     <property name="default_width">500</property>
-    <property name="default_height">700</property>
+    <property name="default_height">500</property>
     <property name="type_hint">dialog</property>
     <signal name="hide" handler="on_transaction_input_hide"/>
     <signal name="delete_event" handler="gtk_widget_hide"/>

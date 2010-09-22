@@ -102,10 +102,11 @@ class FloatDocColumn(DocColumn):
         return self.format % value
 
 class TransactionModel(object):
-    def __init__(self, inout, other_account, dt):
+    def __init__(self, last, inout, other_account, dt):
         self.inout = inout
         self.other_account = other_account
         self.dt = dt
+        self.last = last
               
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
@@ -131,13 +132,14 @@ class TransactionModel(object):
     def row_changed(self, model, row, old_values):
         if old_values:
             if not hasattr(row, 'num'):
-                row.num = 12345
+                row.num = self.last.inc()
                     
             row.save()
-            print row._id
 
 class BankApp(CommonApp):
-    def __init__(self):
+    def __init__(self, conf):
+        self.conf = conf
+        
         builder = gtk.Builder()
         builder.add_from_file("src/bank/glade/main.glade")
         builder.connect_signals(self)
@@ -152,13 +154,19 @@ class BankApp(CommonApp):
         self.date = builder.get_object('date')
         self.transactions_window = builder.get_object('TransactionInput')
         self.transactions_view = builder.get_object('transactions')
+        self.last_in_num = builder.get_object('last_in_num')
+        self.last_out_num = builder.get_object('last_out_num')        
         
         self.plan = AccountsPlan()
         self.bank_acc = self.plan.get_by_name('51/1')
         
+        self.last_in_num_param = self.conf.param('last_in_num_for_'+self.bank_acc._id)
+        self.last_out_num_param = self.conf.param('last_out_num_for_'+self.bank_acc._id)
+        
         self.update_saldo(date.today())
         self.on_date_month_changed(self.date)
         self.set_date(date.today())
+        self.update_last_nums()
     
     def on_date_day_selected(self, widget, data=None):
         self.update_saldo(self.get_date())
@@ -173,6 +181,10 @@ class BankApp(CommonApp):
         
         self.begin_saldo.props.label = "%.2f" % saldo.balance
         self.end_saldo.props.label = "%.2f" % (saldo.balance + balance.balance)
+        
+    def update_last_nums(self):
+        self.last_in_num.set_text(str(self.last_in_num_param.get(0)))
+        self.last_out_num.set_text(str(self.last_out_num_param.get(0)))
         
     def on_date_month_changed(self, widget):
         date = self.get_date()
@@ -195,15 +207,24 @@ class BankApp(CommonApp):
 
     def on_transaction_input_hide(self, *args):    
         gobject.idle_add(self.update_saldo, self.get_date())
+        gobject.idle_add(self.update_last_nums)
         
     def show_transactions_input_window(self, inout):
         date = self.get_date()
         transactions = sorted(self.bank_acc.transactions(
             date, date, income=inout, outcome=not inout), key=lambda r: r.num)
         
+        last = self.last_in_num_param if inout else self.last_out_num_param
+        
         model = EditableListTreeModel(transactions,
-            TransactionModel(inout, self.bank_acc.account_path, self.get_date()))
+            TransactionModel(last, inout, self.bank_acc.account_path, self.get_date()))
         
         init_editable_treeview(self.transactions_view, model)
         
         self.transactions_window.show()
+
+    def on_last_out_num_focus_out_event(self, entry, event):
+        self.last_out_num_param.set(int(entry.get_text()))
+        
+    def on_last_in_num_focus_out_event(self, entry, event):
+        self.last_in_num_param.set(int(entry.get_text()))

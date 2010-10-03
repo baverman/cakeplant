@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import taburet.utils
-import taburet.accounting
+import taburet.accounts
 from datetime import timedelta
 from itertools import groupby
 
@@ -79,7 +79,7 @@ def get_pivot(account, date_from, date_to, inout):
     # Собираем итоговую таблицу по трем группировкам
     # По счету, по контрагенту и по дню месяца
     for account, g in groupby(data, lambda t: t.account):
-        aname = taburet.accounting.Account.get(account).name
+        aname = taburet.accounts.Account.get(account).name
         for who, gg in groupby(g, lambda t: t.who):
             for day, ggg in groupby(gg, lambda t: t.date.day):
                 days[day] = True

@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, date, timedelta
 
-import pygtk
 import gtk, gobject
-pygtk.require("2.0") 
 
-from taburet.accounts import AccountsPlan, Account, accounts_walk 
+from taburet.accounts import AccountsPlan, accounts_walk 
 from taburet.transactions import Transaction
 from model import make_month_transaction_days_getter
 
-from taburet.ui import process_focus_like_access, CommonApp, EditableListTreeModel, init_editable_treeview
+from taburet.ui import CommonApp, EditableListTreeModel, init_editable_treeview
 
 get_month_transaction_days = None
 
@@ -228,3 +226,39 @@ class BankApp(CommonApp):
         
     def on_last_in_num_focus_out_event(self, entry, event):
         self.last_in_num_param.set(int(entry.get_text()))
+
+    def on_kassa_report_activate(self, *args):
+        import bank.reports.kassa
+        import taburet.report.excel
+        import tempfile
+        import subprocess
+        
+        report = bank.reports.kassa.do(self.bank_acc, self.get_date())
+        filename = tempfile.mkstemp('.xls')[1]
+        taburet.report.excel.save(report, filename)
+        
+        subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
+
+    def on_in_report_activate(self, *args):
+        import bank.reports.month
+        import taburet.report.excel
+        import tempfile
+        import subprocess
+        
+        report = bank.reports.month.do(self.bank_acc, self.get_date(), True)
+        filename = tempfile.mkstemp('.xls')[1]
+        taburet.report.excel.save(report, filename)
+        
+        subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
+
+    def on_out_report_activate(self, *args):
+        import bank.reports.month
+        import taburet.report.excel
+        import tempfile
+        import subprocess
+        
+        report = bank.reports.month.do(self.bank_acc, self.get_date(), False)
+        filename = tempfile.mkstemp('.xls')[1]
+        taburet.report.excel.save(report, filename)
+        
+        subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()

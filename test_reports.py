@@ -8,20 +8,21 @@ from datetime import date
 import bank.reports.kassa
 import bank.reports.month
 
-from taburet.utils import sync_design_documents
-import taburet.accounting
-import bank
+from taburet import PackageManager
+from taburet.accounts import AccountsPlan
 import couchdbkit
 
 import taburet.report.excel
 
 s = couchdbkit.Server()
 db = s.get_or_create_db('demo')
-#sync_design_documents(db, ('taburet.counter', 'taburet.accounting', 'bank'))
-taburet.accounting.set_db_for_models(db)
-bank.set_db_for_models(db)
 
-plan = taburet.accounting.AccountsPlan()
+pm = PackageManager()
+pm.use('bank')
+pm.set_db(db, 'taburet.transactions', 'taburet.accounts')
+pm.sync_design_documents()
+
+plan = AccountsPlan()
 account = plan.get_by_name('51/1')
 
 report = bank.reports.kassa.do(account, date(2010, 5, 4))

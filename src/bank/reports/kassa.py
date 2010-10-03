@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import taburet.accounting
+import taburet.accounts
 from datetime import timedelta
 from itertools import groupby
 
@@ -38,7 +38,7 @@ def get_transactions(account, date, income=False, outcome=False):
         elif outcome:
             acc = t.to_acc
             
-        t.account = taburet.accounting.Account.get(acc[-1]).name
+        t.account = taburet.accounts.Account.get(acc[-1]).name
         
     return transactions
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, date, timedelta
+import os.path
 
 import gtk, gobject
 
@@ -139,7 +140,7 @@ class BankApp(CommonApp):
         self.conf = conf
         
         builder = gtk.Builder()
-        builder.add_from_file("src/bank/glade/main.glade")
+        builder.add_from_file(os.path.join(os.path.dirname(__file__), "glade", "main.glade"))
         builder.connect_signals(self)
         self.window = builder.get_object("Bank")
         self.window.show()
@@ -228,36 +229,36 @@ class BankApp(CommonApp):
         self.last_in_num_param.set(int(entry.get_text()))
 
     def on_kassa_report_activate(self, *args):
-        import bank.reports.kassa
+        import reports.kassa
         import taburet.report.excel
         import tempfile
         import subprocess
         
-        report = bank.reports.kassa.do(self.bank_acc, self.get_date())
+        report = reports.kassa.do(self.bank_acc, self.get_date())
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
         
         subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
 
     def on_in_report_activate(self, *args):
-        import bank.reports.month
+        import reports.month
         import taburet.report.excel
         import tempfile
         import subprocess
         
-        report = bank.reports.month.do(self.bank_acc, self.get_date(), True)
+        report = reports.month.do(self.bank_acc, self.get_date(), True)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
         
         subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
 
     def on_out_report_activate(self, *args):
-        import bank.reports.month
+        import reports.month
         import taburet.report.excel
         import tempfile
         import subprocess
         
-        report = bank.reports.month.do(self.bank_acc, self.get_date(), False)
+        report = reports.month.do(self.bank_acc, self.get_date(), False)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
         

@@ -8,7 +8,9 @@ from taburet.accounts import AccountsPlan, accounts_walk
 from taburet.transactions import Transaction
 from model import make_month_transaction_days_getter
 
-from taburet.ui import CommonApp, EditableListTreeModel, init_editable_treeview
+from taburet.ui import CommonApp
+from taburet.ui.model import EditableListTreeModel
+from taburet.ui.tree import init_editable_treeview
 
 get_month_transaction_days = None
 

@@ -71,7 +71,7 @@ class AccountColumn(DocColumn):
     def string_to_value(self, value):
         acc = AccountsPlan().get_by_name(value)
         if not acc:
-            raise ValueError()
+            raise ValueError(u'Счет не найден. Введите правильный номер счета')
         
         return acc.account_path
             

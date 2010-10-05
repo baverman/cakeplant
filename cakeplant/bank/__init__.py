@@ -41,6 +41,9 @@ class DocColumn(object):
     
     def value_to_string(self, value):
         return value
+        
+    def get_value(self, row, default=None):
+        return getattr(row, self.attr, default)
     
     def get_properties(self):
         return {'editable': self.editable}
@@ -66,7 +69,11 @@ class AccountColumn(DocColumn):
         self.completion.set_inline_selection(True)
 
     def string_to_value(self, value):
-        return AccountsPlan().get_by_name(value).account_path
+        acc = AccountsPlan().get_by_name(value)
+        if not acc:
+            raise ValueError()
+        
+        return acc.account_path
             
     def value_to_string(self, value):
         if not value:
@@ -130,12 +137,11 @@ class TransactionModel(object):
         
         return tran 
 
-    def row_changed(self, model, row, old_values):
-        if old_values:
-            if not hasattr(row, 'num'):
-                row.num = self.last.inc()
-                    
-            row.save()
+    def row_changed(self, model, row):
+        if not hasattr(row, 'num'):
+            row.num = self.last.inc()
+                
+        row.save()
 
 class BankApp(CommonApp):
     def __init__(self, conf):

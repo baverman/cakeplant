@@ -2,13 +2,13 @@
 from datetime import datetime, date, timedelta
 import os.path
 
-import gtk, gobject
+import gtk
 
-from taburet.accounts import AccountsPlan, accounts_walk 
+from taburet.accounts import AccountsPlan, accounts_walk
 from taburet.transactions import Transaction
 from model import make_month_transaction_days_getter
 
-from taburet.ui import CommonApp
+from taburet.ui import CommonApp, BuilderAware, idle, join_to_file_dir
 from taburet.ui.model import EditableListTreeModel
 from taburet.ui.tree import init_editable_treeview
 
@@ -19,7 +19,7 @@ class DbSetter(object):
     def set_db(db):
         global get_month_transaction_days
         get_month_transaction_days = make_month_transaction_days_getter(db)
-    
+
 
 set_db = (DbSetter,)
 same_db = 'taburet.transactions'
@@ -29,7 +29,7 @@ class DocColumn(object):
     def __init__(self, attr, editable=True):
         self.attr = attr
         self.editable = editable
-        
+
     def to_string(self, row):
         return self.value_to_string(getattr(row, self.attr, None))
 
@@ -38,13 +38,13 @@ class DocColumn(object):
 
     def string_to_value(self, value):
         return value
-    
+
     def value_to_string(self, value):
         return value
-        
+
     def get_value(self, row, default=None):
         return getattr(row, self.attr, default)
-    
+
     def get_properties(self):
         return {'editable': self.editable}
 
@@ -58,10 +58,10 @@ class AccountColumn(DocColumn):
         self.choices = choices
 
         model = gtk.ListStore(str)
-        
+
         for k, v in self.choices:
             model.append((v,))
-            
+
         self.completion = gtk.EntryCompletion()
         self.completion.set_model(model)
         self.completion.set_text_column(0)
@@ -72,28 +72,28 @@ class AccountColumn(DocColumn):
         acc = AccountsPlan().get_by_name(value)
         if not acc:
             raise ValueError(u'Счет не найден. Введите правильный номер счета')
-        
+
         return acc.account_path
-            
+
     def value_to_string(self, value):
         if not value:
             return ''
-    
+
         for k, v in self.choices:
             if k == value[-1]:
                 return v
-    
+
         return 'Undef'
 
-    def on_editing_started(self, renderer, editable, path):    
+    def on_editing_started(self, renderer, editable, path):
         editable.set_completion(self.completion)
-        return False        
-        
+        return False
+
 
 class IntegerDocColumn(DocColumn):
     def string_to_value(self, value):
         return int(value)
-    
+
     def value_to_string(self, value):
         return str(value)
 
@@ -102,10 +102,10 @@ class FloatDocColumn(DocColumn):
     def __init__(self, attr, format='%.2f', editable=True):
         DocColumn.__init__(self, attr, editable)
         self.format = format
-        
+
     def string_to_value(self, value):
         return float(value)
-    
+
     def value_to_string(self, value):
         return self.format % value
 
@@ -115,7 +115,7 @@ class TransactionModel(object):
         self.other_account = other_account
         self.dt = dt
         self.last = last
-              
+
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
         self.c_num = IntegerDocColumn('num', editable=False)
@@ -134,105 +134,92 @@ class TransactionModel(object):
             tran.to_acc = self.other_account
         else:
             tran.from_acc = self.other_account
-        
-        return tran 
+
+        return tran
 
     def row_changed(self, model, row):
         if not hasattr(row, 'num'):
             row.num = self.last.inc()
-                
+
         row.save()
 
-class BankApp(CommonApp):
+class BankApp(CommonApp, BuilderAware):
     def __init__(self, conf):
         self.conf = conf
-        
-        builder = gtk.Builder()
-        builder.add_from_file(os.path.join(os.path.dirname(__file__), "glade", "main.glade"))
-        builder.connect_signals(self)
-        self.window = builder.get_object("Bank")
-        self.window.show()
 
-        # getting widgets
-        self.in_total = builder.get_object('in_total')
-        self.out_total = builder.get_object('out_total')
-        self.begin_saldo = builder.get_object('begin_saldo')
-        self.end_saldo = builder.get_object('end_saldo')
-        self.date = builder.get_object('date')
-        self.transactions_window = builder.get_object('TransactionInput')
-        self.transactions_view = builder.get_object('transactions')
-        self.last_in_num = builder.get_object('last_in_num')
-        self.last_out_num = builder.get_object('last_out_num')        
-        
+        BuilderAware.__init__(self, join_to_file_dir(__file__, "glade", "main.glade"))
+
         self.plan = AccountsPlan()
         self.bank_acc = self.plan.get_by_name('51/1')
-        
+
         self.last_in_num_param = self.conf.param('last_in_num_for_'+self.bank_acc._id)
         self.last_out_num_param = self.conf.param('last_out_num_for_'+self.bank_acc._id)
-        
+
         self.update_saldo(date.today())
         self.on_date_month_changed(self.date)
         self.set_date(date.today())
         self.update_last_nums()
-    
+
+        self.window.show()
+
     def on_date_day_selected(self, widget, data=None):
         self.update_saldo(self.get_date())
-        
+
     def update_saldo(self, date):
         balance = self.bank_acc.balance(date, date)
-        
+
         self.in_total.props.label = "%.2f" % balance.debet
         self.out_total.props.label = "%.2f" % balance.kredit
-        
+
         saldo = self.bank_acc.balance(None, date - timedelta(days=1))
-        
+
         self.begin_saldo.props.label = "%.2f" % saldo.balance
         self.end_saldo.props.label = "%.2f" % (saldo.balance + balance.balance)
-        
+
     def update_last_nums(self):
         self.last_in_num.set_text(str(self.last_in_num_param.get(0)))
         self.last_out_num.set_text(str(self.last_out_num_param.get(0)))
-        
+
     def on_date_month_changed(self, widget):
         date = self.get_date()
         self.date.clear_marks()
         map(self.date.mark_day, get_month_transaction_days(self.bank_acc, date.year, date.month))
-    
+
     def set_date(self, date):
         self.date.props.year = date.year
         self.date.props.month = date.month - 1
         self.date.props.day = date.day
-    
+
     def get_date(self):
         return datetime(self.date.props.year, self.date.props.month + 1, self.date.props.day)
-    
+
     def on_outcome_transactions_clicked(self, widget):
         self.show_transactions_input_window(False)
-    
+
     def on_income_transactions_clicked(self, widget):
         self.show_transactions_input_window(True)
 
-    def on_transaction_input_hide(self, *args):    
-        gobject.idle_add(self.update_saldo, self.get_date())
-        gobject.idle_add(self.update_last_nums)
-        
+    def on_transaction_input_hide(self, *args):
+        idle(self.update_saldo, self.get_date())
+        idle(self.update_last_nums)
+
     def show_transactions_input_window(self, inout):
         date = self.get_date()
         transactions = sorted(self.bank_acc.transactions(
             date, date, income=inout, outcome=not inout), key=lambda r: r.num)
-        
+
         last = self.last_in_num_param if inout else self.last_out_num_param
-        
+
         model = EditableListTreeModel(transactions,
             TransactionModel(last, inout, self.bank_acc.account_path, self.get_date()))
-        
+
         init_editable_treeview(self.transactions_view, model)
-        
+
         self.transactions_window.show()
 
     def on_last_out_num_focus_out_event(self, entry, event):
         self.last_out_num_param.set(int(entry.get_text()))
-        
+
     def on_last_in_num_focus_out_event(self, entry, event):
         self.last_in_num_param.set(int(entry.get_text()))
 
@@ -241,11 +228,11 @@ class BankApp(CommonApp):
         import taburet.report.excel
         import tempfile
         import subprocess
-        
+
         report = reports.kassa.do(self.bank_acc, self.get_date())
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
-        
+
         subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
 
     def on_in_report_activate(self, *args):
@@ -253,11 +240,11 @@ class BankApp(CommonApp):
         import taburet.report.excel
         import tempfile
         import subprocess
-        
+
         report = reports.month.do(self.bank_acc, self.get_date(), True)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
-        
+
         subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
 
     def on_out_report_activate(self, *args):
@@ -265,9 +252,9 @@ class BankApp(CommonApp):
         import taburet.report.excel
         import tempfile
         import subprocess
-        
+
         report = reports.month.do(self.bank_acc, self.get_date(), False)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
-        
+
         subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()

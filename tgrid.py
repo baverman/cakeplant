@@ -4,7 +4,8 @@ import gtk
 from taburet.ui.grid import GridColumn, Grid
 from taburet.ui import idle
 
-model = [{'aaa': r, 'bbb': 'wow'} for r in range(100)]
+model = [{'aaa': r, 'bbb': 'wow'} for r in range(50)]
+model.append({'aaa':'', 'bbb':''})
 
 window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)

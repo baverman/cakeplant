@@ -1,8 +1,6 @@
 *.pyc
 
-/.project
-/.pydevproject
-/.settings
 /.ropeproject
+/.snaked_project
 
 *.csv

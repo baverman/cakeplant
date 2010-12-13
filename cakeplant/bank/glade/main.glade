@@ -318,62 +318,13 @@
         <property name="visible">True</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
+          <object class="GtkScrolledWindow" id="sw">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkTreeView" id="transactions_view">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="headers_clickable">False</property>
-                <property name="enable_search">False</property>
-                <property name="enable_grid_lines">both</property>
-                <child>
-                  <object class="GtkTreeViewColumn" id="c_num">
-                    <property name="title">&#x2116;</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="c_account">
-                    <property name="min_width">70</property>
-                    <property name="title">&#x421;&#x447;&#x435;&#x442;</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext4"/>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="c_who">
-                    <property name="resizable">True</property>
-                    <property name="title">&#x41A;&#x43E;&#x43D;&#x442;&#x440;&#x430;&#x433;&#x435;&#x43D;&#x442;</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext5"/>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="c_amount">
-                    <property name="title">&#x421;&#x43A;&#x43E;&#x43B;&#x44C;&#x43A;&#x43E;</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext3"/>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkTreeViewColumn" id="c_what">
-                    <property name="resizable">True</property>
-                    <property name="title">&#x417;&#x430; &#x447;&#x442;&#x43E;</property>
-                    <child>
-                      <object class="GtkCellRendererText" id="cellrenderertext2"/>
-                    </child>
-                  </object>
-                </child>
-              </object>
+              <placeholder/>
             </child>
           </object>
           <packing>

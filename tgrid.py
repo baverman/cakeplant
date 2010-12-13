@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import gtk
-from taburet.ui.grid import GridColumn, Grid
+from taburet.ui.grid import GridColumn, Grid, IntGridColumn
 from taburet.ui import idle
 
 model = [{'aaa': r, 'bbb': 'wow'} for r in range(50)]
@@ -16,7 +16,7 @@ sw = gtk.ScrolledWindow()
 sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
 window.add(sw)
 
-table = Grid(GridColumn('aaa'), GridColumn('bbb'))
+table = Grid(IntGridColumn('aaa'), GridColumn('bbb'))
 sw.add(table)
 table.set_model(model)
 table.show()

@@ -8,8 +8,7 @@ from taburet.transactions import Transaction
 from model import make_month_transaction_days_getter
 
 from taburet.ui import CommonApp, BuilderAware, idle, join_to_file_dir
-from taburet.ui.model import EditableListTreeModel
-from taburet.ui.tree import init_editable_treeview
+from taburet.ui.grid import Grid, GridColumn, BadValueException, IntGridColumn, FloatGridColumn
 
 get_month_transaction_days = None
 
@@ -24,123 +23,81 @@ set_db = (DbSetter,)
 same_db = 'taburet.transactions'
 module_deps = ('taburet.accounts', )
 
-class DocColumn(object):
-    def __init__(self, attr, editable=True):
-        self.attr = attr
-        self.editable = editable
-
-    def to_string(self, row):
-        return self.value_to_string(getattr(row, self.attr, None))
-
-    def from_string(self, row, value):
-        setattr(row, self.attr, self.string_to_value(value))
-
-    def string_to_value(self, value):
-        return value
-
-    def value_to_string(self, value):
-        return value
-
-    def get_value(self, row, default=None):
-        return getattr(row, self.attr, default)
-
-    def get_properties(self):
-        return {'editable': self.editable}
-
-
-class TextDocColumn(DocColumn):
-    pass
-
-class AccountColumn(DocColumn):
-    def __init__(self, attr, choices, editable=True):
-        DocColumn.__init__(self, attr, editable)
+class AccountColumn(GridColumn):
+    def __init__(self, attr, choices, *args, **kwargs):
+        GridColumn.__init__(self, attr, *args, **kwargs)
         self.choices = choices
-
-        model = gtk.ListStore(str)
+        self.model = gtk.ListStore(str)
 
         for k, v in self.choices:
-            model.append((v,))
+            self.model.append((v,))
 
-        self.completion = gtk.EntryCompletion()
-        self.completion.set_model(model)
-        self.completion.set_text_column(0)
-        self.completion.set_inline_completion(True)
-        self.completion.set_inline_selection(True)
-
-    def string_to_value(self, value):
+    def update_row_value(self, dirty_row, row):
+        value = dirty_row[self.name]
         acc = AccountsPlan().get_by_name(value)
         if not acc:
-            raise ValueError(u'Счет не найден. Введите правильный номер счета')
+            raise BadValueException('Счет не найден. Введите правильный номер счета')
 
-        return acc.account_path
+        row[self.name] = acc.account_path
 
-    def value_to_string(self, value):
+    def _set_value(self, entry, row):
+        value = row[self.name]
         if not value:
-            return ''
+            return entry.set_text('')
 
         for k, v in self.choices:
             if k == value[-1]:
-                return v
+                entry.set_text(v)
+                return
 
-        return 'Undef'
+        entry.set_text('Undef')
 
-    def on_editing_started(self, renderer, editable, path):
-        editable.set_completion(self.completion)
-        return False
+    def create_widget(self, *args):
+        w = super(AccountColumn, self).create_widget(*args)
 
+        completion = gtk.EntryCompletion()
+        completion.set_model(self.model)
+        completion.set_text_column(0)
+        completion.set_inline_completion(True)
+        completion.set_inline_selection(True)
 
-class IntegerDocColumn(DocColumn):
-    def string_to_value(self, value):
-        return int(value)
+        w.set_completion(completion)
 
-    def value_to_string(self, value):
-        return str(value)
+        return w
 
-
-class FloatDocColumn(DocColumn):
-    def __init__(self, attr, format='%.2f', editable=True):
-        DocColumn.__init__(self, attr, editable)
-        self.format = format
-
-    def string_to_value(self, value):
-        return float(value)
-
-    def value_to_string(self, value):
-        return self.format % value
-
-class TransactionModel(object):
-    def __init__(self, last, inout, other_account, dt):
-        self.inout = inout
-        self.other_account = other_account
-        self.dt = dt
-        self.last = last
-
-        choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
-
-        self.c_num = IntegerDocColumn('num', editable=False)
-        self.c_account = AccountColumn('from_acc' if inout else 'to_acc', choices)
-        self.c_who = TextDocColumn('who')
-        self.c_amount = FloatDocColumn('amount')
-        self.c_what = TextDocColumn('what')
-
-    def new(self):
-        tran = Transaction()
-        tran.what = ''
-        tran.who = ''
-        tran.date = self.dt
-
-        if self.inout:
-            tran.to_acc = self.other_account
-        else:
-            tran.from_acc = self.other_account
-
-        return tran
-
-    def row_changed(self, model, row):
-        if not hasattr(row, 'num'):
-            row.num = self.last.inc()
-
-        row.save()
+#class TransactionModel(object):
+#    def __init__(self, last, inout, other_account, dt):
+#        self.inout = inout
+#        self.other_account = other_account
+#        self.dt = dt
+#        self.last = last
+#
+#        choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
+#
+#        self.c_num = IntegerDocColumn('num', editable=False)
+#        self.c_account = AccountColumn('from_acc' if inout else 'to_acc', choices)
+#        self.c_who = TextDocColumn('who')
+#        self.c_amount = FloatDocColumn('amount')
+#        self.c_what = TextDocColumn('what')
+#
+#    def new(self):
+#        tran = Transaction()
+#        tran.what = ''
+#        tran.who = ''
+#        tran.date = self.dt
+#
+#        if self.inout:
+#            tran.to_acc = self.other_account
+#        else:
+#            tran.from_acc = self.other_account
+#
+#        return tran
+#
+#    def row_changed(self, model, row):
+#        if not hasattr(row, 'num'):
+#            row.num = self.last.inc()
+#
+#        row.save()
 
 class BankApp(CommonApp, BuilderAware):
     def __init__(self, conf):
@@ -202,6 +159,19 @@ class BankApp(CommonApp, BuilderAware):
         idle(self.update_saldo, self.get_date())
         idle(self.update_last_nums)
 
+    def create_transactions_view(self, inout):
+        choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
+
+        columns = [
+            IntGridColumn('num', '№', editable=False, width=3),
+            AccountColumn('from_acc' if inout else 'to_acc', choices, 'Счет', width=4),
+            GridColumn('who', 'Контрагент', width=15),
+            FloatGridColumn('amount', 'Сколько', width=7),
+            GridColumn('what', 'За что', width=10),
+        ]
+
+        return Grid(*columns)
+
     def show_transactions_input_window(self, inout):
         date = self.get_date()
         transactions = sorted(self.bank_acc.transactions(
@@ -209,10 +179,16 @@ class BankApp(CommonApp, BuilderAware):
 
         last = self.last_in_num_param if inout else self.last_out_num_param
 
-        model = EditableListTreeModel(transactions,
-            TransactionModel(last, inout, self.bank_acc.account_path, self.get_date()))
+        if self.sw.get_child():
+            self.sw.get_child().destroy()
 
-        init_editable_treeview(self.transactions_view, model)
+        #model = EditableListTreeModel(transactions,
+        #    TransactionModel(last, inout, self.bank_acc.account_path, self.get_date()))
+
+        tv = self.create_transactions_view(inout)
+        self.sw.add(tv)
+        tv.set_model(transactions)
+        tv.show_all()
 
         self.transactions_window.show()
 

@@ -9,6 +9,7 @@ def on_commit(dr, row):
     if 'isnew' in row:
         dr.grid.model.append({'aaa':'', 'bbb':'', 'isnew':True})
         del row['isnew']
+        dr.jump_to_new_row()
         idle(dr.grid.populate, dr.grid.from_row+1, False, (dr.model_row+1, 0))
 
 def on_error(dr, e):

@@ -6,9 +6,11 @@ import gtk
 from taburet.accounts import AccountsPlan, accounts_walk
 from taburet.transactions import Transaction
 from model import make_month_transaction_days_getter
+from taburet.ui.feedback import show_message
 
 from taburet.ui import CommonApp, BuilderAware, idle, join_to_file_dir
-from taburet.ui.grid import Grid, GridColumn, BadValueException, IntGridColumn, FloatGridColumn
+from taburet.ui.grid import (Grid, GridColumn, BadValueException,
+    IntGridColumn, FloatGridColumn, DirtyRow)
 
 get_month_transaction_days = None
 
@@ -65,39 +67,6 @@ class AccountColumn(GridColumn):
 
         return w
 
-#class TransactionModel(object):
-#    def __init__(self, last, inout, other_account, dt):
-#        self.inout = inout
-#        self.other_account = other_account
-#        self.dt = dt
-#        self.last = last
-#
-#        choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
-#
-#        self.c_num = IntegerDocColumn('num', editable=False)
-#        self.c_account = AccountColumn('from_acc' if inout else 'to_acc', choices)
-#        self.c_who = TextDocColumn('who')
-#        self.c_amount = FloatDocColumn('amount')
-#        self.c_what = TextDocColumn('what')
-#
-#    def new(self):
-#        tran = Transaction()
-#        tran.what = ''
-#        tran.who = ''
-#        tran.date = self.dt
-#
-#        if self.inout:
-#            tran.to_acc = self.other_account
-#        else:
-#            tran.from_acc = self.other_account
-#
-#        return tran
-#
-#    def row_changed(self, model, row):
-#        if not hasattr(row, 'num'):
-#            row.num = self.last.inc()
-#
-#        row.save()
 
 class BankApp(CommonApp, BuilderAware):
     def __init__(self, conf):
@@ -170,7 +139,7 @@ class BankApp(CommonApp, BuilderAware):
             GridColumn('what', 'За что', width=10),
         ]
 
-        return Grid(*columns)
+        return Grid(columns)
 
     def show_transactions_input_window(self, inout):
         date = self.get_date()
@@ -179,15 +148,49 @@ class BankApp(CommonApp, BuilderAware):
 
         last = self.last_in_num_param if inout else self.last_out_num_param
 
-        if self.sw.get_child():
-            self.sw.get_child().destroy()
+        w = [self.sw.get_child()]
+        if w[0]:
+            self.sw.remove(w[0])
+            w[0].destroy()
+        w[:] = []
 
-        #model = EditableListTreeModel(transactions,
-        #    TransactionModel(last, inout, self.bank_acc.account_path, self.get_date()))
+
+        dt = self.get_date()
+
+        def new():
+            tran = Transaction()
+            tran.what = ''
+            tran.who = ''
+            tran.date = dt
+
+            tran._isnew_ = True
+
+            if inout:
+                tran.to_acc = self.bank_acc.account_path
+            else:
+                tran.from_acc = self.bank_acc.account_path
+
+            return tran
+
+        def on_commit(dr, row):
+            if not hasattr(row, 'num'):
+                row.num = last.inc()
+
+            row.save()
+
+            if hasattr(row, '_isnew_'):
+                del row._isnew_
+                transactions.append(new())
+                dr.jump_to_new_row(1)
+
+        def on_error(dr, e):
+            show_message(self.sw, str(e), 5000)
 
         tv = self.create_transactions_view(inout)
         self.sw.add(tv)
-        tv.set_model(transactions)
+
+        transactions.append(new())
+        tv.set_model(transactions, DirtyRow(tv, on_commit, on_error))
         tv.show_all()
 
         self.transactions_window.show()

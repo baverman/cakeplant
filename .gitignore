@@ -4,3 +4,6 @@
 /.snaked_project
 
 *.csv
+/build
+/dist
+/*.egg-info

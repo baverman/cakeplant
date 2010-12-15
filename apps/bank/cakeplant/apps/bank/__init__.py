@@ -8,7 +8,7 @@ def run():
     from taburet import PackageManager, config
     import cakeplant.bank
 
-    s = couchdbkit.Server()
+    s = couchdbkit.Server(host)
     db = s.get_or_create_db(prefix)
 
     conf = config.Configuration(s.get_or_create_db(prefix + '_config'))

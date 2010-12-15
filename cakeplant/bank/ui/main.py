@@ -24,6 +24,9 @@ class BankApp(CommonApp, BuilderAware):
         self.set_date(date.today())
         self.update_last_nums()
 
+        self.window.set_title(
+            conf.get('firm_name', 'WTF?') + ' | ' + self.bank_acc.name + ' ' + self.bank_acc.desc)
+
         self.window.show()
 
     def on_date_day_selected(self, widget, data=None):

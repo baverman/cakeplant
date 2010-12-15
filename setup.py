@@ -11,7 +11,7 @@ setup(
     packages = find_packages(exclude=('apps',)),
     install_requires = ['taburet'],
     include_package_data = True,
-    namespace_packages = ['cakeplant.apps'],
+    namespace_packages = ['cakeplant', 'cakeplant.apps'],
     url = 'http://github.com/baverman/cakeplant',
     classifiers = [
         "Programming Language :: Python",

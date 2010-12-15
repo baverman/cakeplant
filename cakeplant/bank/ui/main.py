@@ -114,3 +114,7 @@ class BankApp(CommonApp, BuilderAware):
         taburet.report.excel.save(report, filename)
 
         subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
+
+    def show_dialog(self, *args):
+        from cakeplant.accounts import AccountsForm
+        AccountsForm().show()

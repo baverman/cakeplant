@@ -5,5 +5,5 @@
 
 *.csv
 /build
-/dist
-/*.egg-info
+dist
+*.egg-info

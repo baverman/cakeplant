@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
-import sys
-sys.path.append('./src')
-
 import gtk
 import couchdbkit
 
-from taburet import PackageManager, config 
+from taburet import PackageManager, config
 import cakeplant.bank
 
 s = couchdbkit.Server()

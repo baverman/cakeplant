@@ -8,14 +8,10 @@ setup(
     description = 'Accounting for bakeries',
 #    long_description = open('README.rst').read(),
     zip_safe   = False,
-    packages = find_packages(),
+    packages = find_packages(exclude=('apps',)),
     install_requires = ['taburet'],
     include_package_data = True,
-    #entry_points = {
-    #    'gui_scripts': [
-    #        'snaked = snaked.core.run:run',
-    #    ]
-    #},
+    namespace_packages = ['cakeplant.apps'],
     url = 'http://github.com/baverman/cakeplant',
     classifiers = [
         "Programming Language :: Python",

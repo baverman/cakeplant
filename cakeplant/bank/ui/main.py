@@ -8,13 +8,13 @@ from ..model import get_month_transaction_days
 
 class BankApp(CommonApp, BuilderAware):
     """glade-file: main.glade"""
-    def __init__(self, conf):
+    def __init__(self, conf, account_name):
         self.conf = conf
 
         BuilderAware.__init__(self, join_to_file_dir(__file__, "main.glade"))
 
         self.plan = AccountsPlan()
-        self.bank_acc = self.plan.get_by_name('51/1')
+        self.bank_acc = self.plan.get_by_name(account_name)
 
         self.last_in_num_param = self.conf.param('last_in_num_for_'+self.bank_acc._id)
         self.last_out_num_param = self.conf.param('last_out_num_for_'+self.bank_acc._id)

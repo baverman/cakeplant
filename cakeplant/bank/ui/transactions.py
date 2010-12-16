@@ -13,8 +13,8 @@ from taburet.accounts import AccountsPlan, accounts_walk
 from .. import get_who_choice, get_what_choice
 
 class AccountColumn(GridColumn):
-    def __init__(self, attr, choices, *args, **kwargs):
-        GridColumn.__init__(self, attr, *args, **kwargs)
+    def __init__(self, attr, choices, **kwargs):
+        GridColumn.__init__(self, attr, **kwargs)
         self.choices = choices
         self.model = gtk.ListStore(str)
 
@@ -97,11 +97,11 @@ class TransactionsForm(BuilderAware):
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
         columns = [
-            IntGridColumn('num', '№', editable=False, width=3),
-            AccountColumn('from_acc' if inout else 'to_acc', choices, 'Счет', width=4),
-            AutocompleteColumn('who', get_who_choice(), 'Контрагент', width=15),
-            FloatGridColumn('amount', 'Сколько', width=7),
-            AutocompleteColumn('what', get_what_choice(), 'За что', width=10),
+            IntGridColumn('num', label='№', editable=False, width=3),
+            AccountColumn('from_acc' if inout else 'to_acc', choices, label='Счет', width=4),
+            AutocompleteColumn('who', get_who_choice(), label='Контрагент', width=15),
+            FloatGridColumn('amount', label='Сколько', width=7),
+            AutocompleteColumn('what', get_what_choice(), label='За что', width=10),
         ]
 
         self.tv = Grid(columns)

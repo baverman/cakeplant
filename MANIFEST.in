@@ -1,2 +1,2 @@
-recursive-include cakeplant *.erl *.js *.glade
+recursive-include cakeplant *.glade *.js
 include LICENSE

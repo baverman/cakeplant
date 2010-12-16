@@ -111,6 +111,8 @@ class TransactionsForm(BuilderAware):
         self.tv.set_model(transactions, DirtyRow(self.tv, on_commit, on_error))
         self.tv.show_all()
 
+        self.window.set_title(('Приход за ' if inout else 'Расход за ') + date.strftime('%d.%m.%Y'))
+
     def show(self):
         self.window.show_all()
         refresh_gui()

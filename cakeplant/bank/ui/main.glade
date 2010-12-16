@@ -256,7 +256,7 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button3">
-                <property name="label" translatable="yes">&#x41A;&#x430;&#x441;&#x441;&#x430;</property>
+                <property name="label" translatable="yes">&#x41E;&#x442;&#x447;&#x435;&#x442; &#x437;&#x430; &#x434;&#x435;&#x43D;&#x44C;</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>

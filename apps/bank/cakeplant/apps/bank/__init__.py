@@ -1,6 +1,10 @@
 def run():
-    import sys
+    import sys, os
     host, prefix, account = sys.argv[1:4]
+
+    if os.name == 'nt':
+        import locale
+        locale.setlocale(locale.LC_ALL, '')
 
     import gtk
     import couchdbkit

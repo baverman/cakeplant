@@ -88,7 +88,7 @@ class BankApp(CommonApp, BuilderAware):
         import tempfile
         from taburet.utils import start_file
 
-        report = kassa.do(self.bank_acc, self.get_date())
+        report = kassa.do(self.conf, self.bank_acc, self.get_date())
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
 
@@ -100,7 +100,7 @@ class BankApp(CommonApp, BuilderAware):
         import tempfile
         from taburet.utils import start_file
 
-        report = month.do(self.bank_acc, self.get_date(), True)
+        report = month.do(self.conf, self.bank_acc, self.get_date(), True)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
 
@@ -112,7 +112,7 @@ class BankApp(CommonApp, BuilderAware):
         import tempfile
         from taburet.utils import start_file
 
-        report = month.do(self.bank_acc, self.get_date(), False)
+        report = month.do(self.conf, self.bank_acc, self.get_date(), False)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
 

@@ -4,6 +4,7 @@ import taburet.accounts
 from datetime import timedelta
 from itertools import groupby
 
+from taburet.utils import lenc
 from taburet.report import Workbook, group_sum
 
 def fill_transactions(sh, sr, sc, transactions):
@@ -20,7 +21,7 @@ def fill_total(sh, r, c, transactions):
 
 def fill_amounts_grouped_by_account(sh, sr, sc, transactions):
     data = {}
-    
+
     for k, g in groupby(transactions, lambda t: t.account):
         group_sum(data, k, sum(r.amount for r in g))
 
@@ -31,51 +32,53 @@ def fill_amounts_grouped_by_account(sh, sr, sc, transactions):
 def get_transactions(account, date, income=False, outcome=False):
     transactions = account.transactions(date, date, income=income, outcome=outcome).all()
     transactions.sort(key=lambda r: r.num)
-    
+
     for t in transactions:
         if income:
             acc = t.from_acc
         elif outcome:
             acc = t.to_acc
-            
+
         t.account = taburet.accounts.Account.get(acc[-1]).name
-        
+
     return transactions
 
-def do(account, date):
+def do(conf, account, date):
     book = Workbook()
-    
+
     sh = book.add_sheet('касса')
 
-    sh.merge(0,0,0,9).value = date.strftime('Касса за %d %B %Y') 
-    
+    title = u'%s %s %s. ' % (conf.get('firm_name', ''), account.name, account.desc)
+
+    sh.merge(0,0,0,9).value = title + u'Отчет за ' + lenc(date.strftime('%d %B %Y'))
+
     begin_saldo = account.balance(None, date - timedelta(days=1))
     sh[1:0].value = 'Сальдо на начало %.2f' % begin_saldo.balance
-    
+
     end_saldo = account.balance(None, date)
     sh[1:5].value = 'Сальдо на конец %.2f' % end_saldo.balance
-    
+
     sh.merge(2,2,0,4).value = 'Приход'
     sh.merge(2,2,5,9).value = 'Расход'
-    
+
     sh[2:0].style.align.horz.center()
-    sh[2:5].style.align.horz.center()        
-    
+    sh[2:5].style.align.horz.center()
+
     for sc in (0, 5):
         sh[3:0+sc].value = '№'
         sh[3:1+sc].value = 'Счет'
         sh[3:2+sc].value = 'Кто'
         sh[3:3+sc].value = 'Сколько'
         sh[3:4+sc].value = 'За что'
-    
+
     in_transactions = get_transactions(account, date, income=True)
     fill_transactions(sh, 4, 0, in_transactions)
-    
+
     out_transactions = get_transactions(account, date, outcome=True)
     fill_transactions(sh, 4, 5, out_transactions)
-    
+
     total_row = sh.maxrow + 1
-    
+
     sh[total_row:0].value = 'ИТОГО'
     fill_total(sh, total_row, 3, in_transactions)
     fill_total(sh, total_row, 8, out_transactions)
@@ -87,17 +90,17 @@ def do(account, date):
     sh.range(2, 3, 5, 9).set_borders()
     sh.range(4, total_row - 1, 5, 9).set_borders()
     sh.range(total_row, total_row, 5, 9).set_borders(0)
-    
+
     fill_amounts_grouped_by_account(sh, total_row + 2, 1, in_transactions)
     fill_amounts_grouped_by_account(sh, total_row + 2, 6, out_transactions)
-    
+
     sh.rows.height = 255
 
     with sh.style as style:
         style.align.vert.center()
         style.format = '0.00'
-    
+
     for column in (0, 1, 2, 5, 6, 7):
         sh[:column].autofit(3)
-        
+
     return book

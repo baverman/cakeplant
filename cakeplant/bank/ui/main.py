@@ -83,40 +83,40 @@ class BankApp(CommonApp, BuilderAware):
         self.last_in_num_param.set(int(entry.get_text()))
 
     def on_kassa_report_activate(self, *args):
-        import reports.kassa
+        from ..reports import kassa
         import taburet.report.excel
         import tempfile
-        import subprocess
+        from taburet.utils import start_file
 
-        report = reports.kassa.do(self.bank_acc, self.get_date())
+        report = kassa.do(self.bank_acc, self.get_date())
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
 
-        subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
+        start_file(filename)
 
     def on_in_report_activate(self, *args):
-        import reports.month
+        from ..reports import month
         import taburet.report.excel
         import tempfile
-        import subprocess
+        from taburet.utils import start_file
 
-        report = reports.month.do(self.bank_acc, self.get_date(), True)
+        report = month.do(self.bank_acc, self.get_date(), True)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
 
-        subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
+        start_file(filename)
 
     def on_out_report_activate(self, *args):
-        import reports.month
+        from ..reports import month
         import taburet.report.excel
         import tempfile
-        import subprocess
+        from taburet.utils import start_file
 
-        report = reports.month.do(self.bank_acc, self.get_date(), False)
+        report = month.do(self.bank_acc, self.get_date(), False)
         filename = tempfile.mkstemp('.xls')[1]
         taburet.report.excel.save(report, filename)
 
-        subprocess.Popen(['/usr/bin/env', 'xdg-open', filename]).poll()
+        start_file(filename)
 
     def show_dialog(self, *args):
         from cakeplant.accounts import AccountsForm

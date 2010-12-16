@@ -37,3 +37,51 @@ def test_transaction_days(db):
 
     result = bank.get_month_transaction_days(acc2, 2010, 7)
     assert result == []
+
+def test_what_choice(db):
+    plan = AccountsPlan()
+
+    acc1 = plan.add_account()
+    acc2 = plan.add_account()
+
+    t = plan.create_transaction(acc1, acc2, 200.0)
+    t.what = u'за хлеб'
+    t.save()
+
+    t = plan.create_transaction(acc1, acc2, 300.0)
+    t.what = u'за воду'
+    t.save()
+
+    result = bank.get_what_choice()
+    assert result == [u'за воду', u'за хлеб']
+
+    t = plan.create_transaction(acc1, acc2, 300.0)
+    t.what = u'за воду'
+    t.save()
+
+    result = bank.get_what_choice()
+    assert result == [u'за воду', u'за хлеб']
+
+def test_who_choice(db):
+    plan = AccountsPlan()
+
+    acc1 = plan.add_account()
+    acc2 = plan.add_account()
+
+    t = plan.create_transaction(acc1, acc2, 200.0)
+    t.who = u'Бичиков'
+    t.save()
+
+    t = plan.create_transaction(acc1, acc2, 300.0)
+    t.who = u'Зубков'
+    t.save()
+
+    result = bank.get_who_choice()
+    assert result == [u'Бичиков', u'Зубков']
+
+    t = plan.create_transaction(acc1, acc2, 300.0)
+    t.who = u'Зубков'
+    t.save()
+
+    result = bank.get_who_choice()
+    assert result == [u'Бичиков', u'Зубков']

@@ -5,13 +5,14 @@ from taburet.ui.feedback import show_message
 
 from taburet.ui import BuilderAware, join_to_file_dir, idle, refresh_gui
 from taburet.ui.grid import (Grid, GridColumn, BadValueException,
-    IntGridColumn, FloatGridColumn, DirtyRow)
+    IntGridColumn, FloatGridColumn, DirtyRow, AutocompleteColumn)
 
 from taburet.transactions import Transaction
 from taburet.accounts import AccountsPlan, accounts_walk
 
+from .. import get_who_choice, get_what_choice
+
 class AccountColumn(GridColumn):
-    """glade-file: transactions.glade"""
     def __init__(self, attr, choices, *args, **kwargs):
         GridColumn.__init__(self, attr, *args, **kwargs)
         self.choices = choices
@@ -54,6 +55,7 @@ class AccountColumn(GridColumn):
         return w
 
 class TransactionsForm(BuilderAware):
+    """glade-file: transactions.glade"""
     def __init__(self, inout, other_account, date, last_in, last_out, on_close=None):
         BuilderAware.__init__(self, join_to_file_dir(__file__, "transactions.glade"))
         self.on_close = on_close
@@ -97,9 +99,9 @@ class TransactionsForm(BuilderAware):
         columns = [
             IntGridColumn('num', '№', editable=False, width=3),
             AccountColumn('from_acc' if inout else 'to_acc', choices, 'Счет', width=4),
-            GridColumn('who', 'Контрагент', width=15),
+            AutocompleteColumn('who', get_who_choice(), 'Контрагент', width=15),
             FloatGridColumn('amount', 'Сколько', width=7),
-            GridColumn('what', 'За что', width=10),
+            AutocompleteColumn('what', get_what_choice(), 'За что', width=10),
         ]
 
         self.tv = Grid(columns)

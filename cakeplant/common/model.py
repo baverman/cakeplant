@@ -9,8 +9,8 @@ class Customer(Document):
     NotFound = ResourceNotFound
 
     name = StringProperty(required=True)
-    address = StringProperty(required=True)
-    inn = StringProperty(required=True)
+    address = StringProperty(required=False)
+    inn = StringProperty(required=False)
     points = ListProperty(default=[]) # id, name
 
     def add_point(self, name):

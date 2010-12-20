@@ -112,7 +112,10 @@ def make_customers():
     oldzacs = {}
     customers = {}
     for id, adress, inn, name, visible in traverse('TPocs.csv'):
-        c = Customer(_id='c_' + id, name=name.decode('utf-8'),
+        if not name:
+            name = 'Unknown'
+
+        c = Customer(_id='c-' + id, name=name.decode('utf-8'),
             address=adress.decode('utf-8'), inn=inn.decode('utf-8'))
 
         if visible == '0':
@@ -120,30 +123,31 @@ def make_customers():
 
         customers[int(id)] = c
 
-        if id not in c2z:
-            continue
+        if id in c2z:
+            for i, zid in enumerate(c2z[id]):
+                if zid not in zacs:
+                    print "Can't find zid", zid, 'for customer', id, name, visible
+                    continue
 
-        for i, zid in enumerate(c2z[id]):
-            if zid not in zacs:
-                print "Can't find zid", zid, 'for customer', id, name, visible
-                continue
+                pname, visible = zacs[zid]
+                p = {'id':i+1, 'name':pname.decode('utf-8')}
+                if visible == '0':
+                    p['hidden'] = True
+                c.points.append(p)
 
-            pname, visible = zacs[zid]
-            p = {'id':i+1, 'name':pname.decode('utf-8')}
-            if visible == '0':
-                p['hidden'] = True
-            c.points.append(p)
+                if zid in oldzacs:
+                    print 'zac', zid, 'already in map', c, ' -> ', customers[oldzacs[zid][0]]
+                    continue
 
-            if zid in oldzacs:
-                print 'zac', zid, 'already in map', c, ' -> ', customers[oldzacs[zid][0]]
-                continue
+                oldzacs[zid] = (int(id), p['id'])
 
-            oldzacs[zid] = (int(id), p['id'])
+        c.save()
 
     cPickle.dump(oldzacs, open('oldzacs.pickle', 'w'))
     return oldzacs
 
+make_customers()
 #dump_orders(make_customers())
 #process_order_data(cPickle.load(open('orders.pickle')))
-make_orders(cPickle.load(open('orders.pickle')), cPickle.load(open('ordata.pickle')))
+#make_orders(cPickle.load(open('orders.pickle')), cPickle.load(open('ordata.pickle')))
 

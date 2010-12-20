@@ -1,0 +1,3 @@
+#!/bin/sh
+
+mdb-tables -1 "$1" | xargs -d '\n' -n1 --replace=^ echo "mdb-export \"$1\" \"^\" > \"^.csv\"" | sh

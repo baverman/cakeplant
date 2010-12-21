@@ -7,6 +7,8 @@ from taburet.ui import BuilderAware, join_to_file_dir, idle, refresh_gui
 from taburet.ui.grid import (Grid, GridColumn, BadValueException,
     IntGridColumn, FloatGridColumn, DirtyRow, AutocompleteColumn)
 
+from taburet.ui.completion import make_simple_completion
+
 from taburet.transactions import Transaction
 from taburet.accounts import AccountsPlan, accounts_walk
 
@@ -16,10 +18,8 @@ class AccountColumn(GridColumn):
     def __init__(self, attr, choices, **kwargs):
         GridColumn.__init__(self, attr, **kwargs)
         self.choices = choices
-        self.model = gtk.ListStore(str)
-
-        for k, v in self.choices:
-            self.model.append((v,))
+        self.completion_choices = [v for k, v in self.choices]
+        self.completion = make_simple_completion(self.completion_choices)
 
     def update_row_value(self, dirty_row, row):
         value = dirty_row[self.name]
@@ -43,15 +43,7 @@ class AccountColumn(GridColumn):
 
     def create_widget(self, *args):
         w = super(AccountColumn, self).create_widget(*args)
-
-        completion = gtk.EntryCompletion()
-        completion.set_model(self.model)
-        completion.set_text_column(0)
-        completion.set_inline_completion(True)
-        completion.set_inline_selection(True)
-
-        w.set_completion(completion)
-
+        self.completion.attach_to_entry(w)
         return w
 
 class TransactionsForm(BuilderAware):

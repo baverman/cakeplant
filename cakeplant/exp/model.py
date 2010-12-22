@@ -3,8 +3,6 @@ from couchdbkit import ( Document, ListProperty, FloatProperty, ResourceNotFound
 
 from taburet.cdbkit import DateTimeProperty
 
-from datetime import datetime
-
 class IntListProperty(ListProperty):
     def __init__(self, verbose_name=None, default=None,
             required=False, **kwds):
@@ -34,3 +32,22 @@ class Consignment(Document):
     @property
     def summ(self):
         return sum(p['price']*p['count'] for p in self.positions)
+
+def get_month_consignment_days(year, month):
+    result = Consignment.get_db().view('exp/consignment_days', startkey=[year, month],
+        endkey=[year, month, {}], group=True, group_level=3)
+
+    return [r['key'][-1] for r in result]
+
+def get_day_consignment_customers(dt):
+    result = Consignment.get_db().view('exp/consignment_days', startkey=[dt.year, dt.month, dt.day],
+        endkey=[dt.year, dt.month, dt.day, {}], group=True, group_level=5)
+
+    return [tuple(r['key'][-2:]) for r in result]
+
+def dt2int(dt):
+    return int(dt.strftime('%Y%m%d'))
+
+def get_consignments(dt, point_id=None):
+    return Consignment.view('exp/get_consignments',
+        key=[dt2int(dt), point_id[0], point_id[1]], include_docs=True).all()

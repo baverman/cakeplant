@@ -23,6 +23,9 @@ class Customer(Document):
         else:
             return "<@ %s>" % self.name.encode('utf8')
 
+    def get_point_id(self, pid):
+        return (int(self._id.rpartition('-')[2]), pid)
+
 
 class Price(Document):
     good = StringProperty(required=True)

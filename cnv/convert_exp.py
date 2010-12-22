@@ -42,7 +42,7 @@ def dump_orders(oldzacs):
         except ValueError:
             continue
 
-        if date.year < 2009:
+        if date < datetime.datetime(2010, 11, 1):
             continue
 
         result[id] = (date, oldzacs[idZac], num, driver, idWay, exp)
@@ -99,6 +99,11 @@ def make_orders(orders, ordata):
             sys.stdout.write('.')
             sys.stdout.flush()
 
+    if len(orders_to_save):
+        Consignment.get_db().save_docs(orders_to_save, all_or_nothing=True)
+        Consignment.get_db().ensure_full_commit()
+        orders_to_save[:] = []
+
 def make_customers():
     zacs = {}
     for idFirm, name, point, idWay, copies, id, NDS, idPrice, isVisible in traverse('TZacs.csv'):
@@ -146,8 +151,8 @@ def make_customers():
     cPickle.dump(oldzacs, open('oldzacs.pickle', 'w'))
     return oldzacs
 
-make_customers()
-#dump_orders(make_customers())
-#process_order_data(cPickle.load(open('orders.pickle')))
-#make_orders(cPickle.load(open('orders.pickle')), cPickle.load(open('ordata.pickle')))
+#make_customers()
+dump_orders(cPickle.load(open('oldzacs.pickle')))
+process_order_data(cPickle.load(open('orders.pickle')))
+make_orders(cPickle.load(open('orders.pickle')), cPickle.load(open('ordata.pickle')))
 

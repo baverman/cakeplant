@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 
 import gtk, pango
 
 from taburet.ui import BuilderAware, join_to_file_dir, idle
 from taburet.ui.completion import Completion
+from taburet.ui.grid import Grid, IntGridColumn, FloatGridColumn, DirtyRow as GridDirtyRow
 
 from taburet.doctype import get_by_type
 from cakeplant.common import Customer
@@ -39,6 +41,9 @@ class ForwarderForm(BuilderAware):
         self.today_customers = {}
 
     def fill_customers(self, model, key):
+        if not key:
+            return
+
         key = unicode(key, 'utf-8').lower()
         for name, id in self.customers:
             if key == '*' or key in name.lower():
@@ -54,8 +59,33 @@ class ForwarderForm(BuilderAware):
             self.update_consigment_grid()
 
     def update_consigment_grid(self):
+        self.cons_nb.hide()
+        for i in range(self.cons_nb.get_n_pages()):
+            self.cons_nb.remove_page(i)
+
         dt = self.get_date()
-        print get_consignments(dt, self.current_point)
+        consigments = get_consignments(dt, self.current_point)
+
+        if not consigments:
+            return
+
+        for i, c in enumerate(consigments):
+            sw = gtk.ScrolledWindow()
+            sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+
+            gr = Grid([
+                IntGridColumn('id', label='Наименование', width=40),
+                FloatGridColumn('count', label='Количество', width=5, format="%g"),
+                FloatGridColumn('price', label='Цена', width=5),
+            ])
+            dr = GridDirtyRow(gr)
+            gr.set_model(c.positions, dr)
+            sw.add(gr)
+            sw.show_all()
+
+            self.cons_nb.append_page(sw, gtk.Label(str(i)))
+
+        self.cons_nb.show()
 
     def show(self):
         self.window.show()

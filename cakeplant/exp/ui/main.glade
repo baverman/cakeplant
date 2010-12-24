@@ -209,7 +209,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tab_pos">bottom</property>
-                <property name="show_tabs">False</property>
                 <child>
                   <placeholder/>
                 </child>
@@ -249,8 +248,8 @@
   </object>
   <object class="GtkSizeGroup" id="szgrp1">
     <widgets>
-      <widget name="label4"/>
       <widget name="label3"/>
+      <widget name="label4"/>
     </widgets>
   </object>
 </interface>

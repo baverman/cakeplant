@@ -61,7 +61,7 @@ class ForwarderForm(BuilderAware):
     def update_consigment_grid(self):
         self.cons_nb.hide()
         for i in range(self.cons_nb.get_n_pages()):
-            self.cons_nb.remove_page(i)
+            self.cons_nb.remove_page(-1)
 
         dt = self.get_date()
         consigments = get_consignments(dt, self.current_point)
@@ -75,15 +75,15 @@ class ForwarderForm(BuilderAware):
 
             gr = Grid([
                 IntGridColumn('id', label='Наименование', width=40),
-                FloatGridColumn('count', label='Количество', width=5, format="%g"),
-                FloatGridColumn('price', label='Цена', width=5),
+                FloatGridColumn('count', label='Кол-во', width=7, format="%g"),
+                FloatGridColumn('price', label='Цена', width=7),
             ])
             dr = GridDirtyRow(gr)
             gr.set_model(c.positions, dr)
             sw.add(gr)
             sw.show_all()
 
-            self.cons_nb.append_page(sw, gtk.Label(str(i)))
+            self.cons_nb.append_page(sw, gtk.Label('Накладная #%d' % (i + 1)))
 
         self.cons_nb.show()
 

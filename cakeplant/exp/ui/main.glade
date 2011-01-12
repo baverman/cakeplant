@@ -206,7 +206,6 @@
             </child>
             <child>
               <object class="GtkNotebook" id="cons_nb">
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="tab_pos">bottom</property>
                 <child>
@@ -230,6 +229,19 @@
               </object>
               <packing>
                 <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="cons_are_out_lb">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">&#x41D;&#x430;&#x43A;&#x43B;&#x430;&#x434;&#x43D;&#x44B;&#x445; &#x43D;&#x435;&#x442;</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="scale" value="2.000000"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>

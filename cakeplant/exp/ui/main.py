@@ -67,7 +67,10 @@ class ForwarderForm(BuilderAware):
         consigments = get_consignments(dt, self.current_point)
 
         if not consigments:
+            self.cons_are_out_lb.show()
             return
+
+        self.cons_are_out_lb.hide()
 
         for i, c in enumerate(consigments):
             sw = gtk.ScrolledWindow()

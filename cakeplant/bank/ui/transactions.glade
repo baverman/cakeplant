@@ -43,6 +43,7 @@
                 <property name="can_focus">False</property>
                 <property name="receives_default">False</property>
                 <property name="image">image2</property>
+                <signal name="clicked" handler="on_delete_btn_clicked"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -58,6 +59,7 @@
                 <property name="can_focus">False</property>
                 <property name="receives_default">False</property>
                 <property name="image">image1</property>
+                <signal name="clicked" handler="on_move_btn_clicked"/>
               </object>
               <packing>
                 <property name="expand">False</property>

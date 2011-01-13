@@ -79,9 +79,7 @@ class CheckBoxColumn(GridColumn):
                 self.checks[r._id] = True
 
         self.emit_check()
-
-        grid = self.dr.grid
-        grid.populate(grid.from_row)
+        self.dr.grid.refresh()
 
     @guard('changing')
     def set_value(self, entry, row):
@@ -102,7 +100,7 @@ class TransactionsForm(BuilderAware):
         BuilderAware.__init__(self, join_to_file_dir(__file__, "transactions.glade"))
         self.on_close = on_close
 
-        transactions = sorted(other_account.transactions(
+        self.transactions = transactions = sorted(other_account.transactions(
             date, date, income=inout, outcome=not inout), key=lambda r: r.num)
 
         last = last_in if inout else last_out
@@ -136,20 +134,13 @@ class TransactionsForm(BuilderAware):
         def on_error(dr, e):
             show_message(self.sw, str(e), 5000)
 
-        def on_check(checks):
-            for k, v in checks.iteritems():
-                if k and v:
-                    self.delete_btn.set_sensitive(True)
-                    self.move_btn.set_sensitive(True)
-                    return
-
-            self.delete_btn.set_sensitive(False)
-            self.move_btn.set_sensitive(False)
 
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
+        self.check_col = CheckBoxColumn(transactions, self.on_check)
+
         columns = [
-            CheckBoxColumn(transactions, on_check),
+            self.check_col,
             IntGridColumn('num', label='№', editable=False, width=3),
             AccountColumn('from_acc' if inout else 'to_acc', choices, label='Счет', width=4),
             AutocompleteColumn('who', get_who_choice(), label='Контрагент', width=15),
@@ -166,6 +157,16 @@ class TransactionsForm(BuilderAware):
 
         self.window.set_title(('Приход за ' if inout else 'Расход за ') + date.strftime('%d.%m.%Y'))
 
+    def on_check(self, checks):
+        for k, v in checks.iteritems():
+            if k and v:
+                self.delete_btn.set_sensitive(True)
+                self.move_btn.set_sensitive(True)
+                return
+
+        self.delete_btn.set_sensitive(False)
+        self.move_btn.set_sensitive(False)
+
     def show(self):
         self.window.show_all()
         refresh_gui()
@@ -174,3 +175,23 @@ class TransactionsForm(BuilderAware):
     def on_window_delete_event(self, *args):
         if self.on_close:
             self.on_close()
+
+    def on_move_btn_clicked(self, btn):
+        pass
+
+    def on_delete_btn_clicked(self, btn):
+        dlg = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION,
+            gtk.BUTTONS_YES_NO, "Удалить выделенные проводки?")
+
+        if dlg.run() == gtk.RESPONSE_YES:
+            checks = self.check_col.checks
+            for r in self.transactions[:]:
+                if r._id and checks.get(r._id, False):
+                    self.transactions.remove(r)
+                    r.delete()
+
+            checks.clear()
+            self.on_check(checks)
+            self.tv.refresh()
+
+        dlg.destroy()

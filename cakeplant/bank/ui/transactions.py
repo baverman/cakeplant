@@ -48,19 +48,40 @@ class AccountColumn(GridColumn):
         return w
 
 class CheckBoxColumn(GridColumn):
-    def __init__(self, model):
+    def __init__(self, model, on_check=None):
         GridColumn.__init__(self, 'checked_state')
         self.model = model
         self.checks = {}
+        self.dr = None
+        self.on_check = on_check
 
     def create_widget(self, dirty_row):
         e = gtk.CheckButton()
+        e.props.can_focus = False
         e.connect_after('clicked', self.on_clicked)
+        self.dr = dirty_row
         return e
 
     @guarded_by('changing')
     def on_clicked(self, chk):
         self.checks[self.model[chk.row]._id] = chk.get_active()
+        self.emit_check()
+
+    def emit_check(self):
+        if self.on_check:
+            self.on_check(self.checks)
+
+    def on_all_clicked(self, chk):
+        self.checks.clear()
+
+        if chk.get_active():
+            for r in self.model:
+                self.checks[r._id] = True
+
+        self.emit_check()
+
+        grid = self.dr.grid
+        grid.populate(grid.from_row)
 
     @guard('changing')
     def set_value(self, entry, row):
@@ -69,6 +90,7 @@ class CheckBoxColumn(GridColumn):
     def get_title_widget(self):
         w = gtk.CheckButton()
         w.props.can_focus = False
+        w.connect_after('clicked', self.on_all_clicked)
         return w
 
     def get_attach_flags(self):
@@ -114,10 +136,20 @@ class TransactionsForm(BuilderAware):
         def on_error(dr, e):
             show_message(self.sw, str(e), 5000)
 
+        def on_check(checks):
+            for k, v in checks.iteritems():
+                if k and v:
+                    self.delete_btn.set_sensitive(True)
+                    self.move_btn.set_sensitive(True)
+                    return
+
+            self.delete_btn.set_sensitive(False)
+            self.move_btn.set_sensitive(False)
+
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
         columns = [
-            CheckBoxColumn(transactions),
+            CheckBoxColumn(transactions, on_check),
             IntGridColumn('num', label='№', editable=False, width=3),
             AccountColumn('from_acc' if inout else 'to_acc', choices, label='Счет', width=4),
             AutocompleteColumn('who', get_who_choice(), label='Контрагент', width=15),

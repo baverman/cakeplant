@@ -94,6 +94,17 @@ class CheckBoxColumn(GridColumn):
     def get_attach_flags(self):
         return 0
 
+    @property
+    def checked_rows(self):
+        for r in self.model[:]:
+            if r._id and self.checks.get(r._id, False):
+                yield r
+
+    def clear(self):
+        self.checks.clear()
+        self.emit_check()
+
+
 class TransactionsForm(BuilderAware):
     """glade-file: transactions.glade"""
     def __init__(self, inout, other_account, date, last_in, last_out, on_close=None):
@@ -129,15 +140,25 @@ class TransactionsForm(BuilderAware):
             if hasattr(row, '_isnew_'):
                 del row._isnew_
                 transactions.append(new())
-                dr.jump_to_new_row(1)
+                dr.jump_to_new_row(2)
 
         def on_error(dr, e):
             show_message(self.sw, str(e), 5000)
 
+        def on_check(checks):
+            for k, v in checks.iteritems():
+                if k and v:
+                    self.delete_btn.set_sensitive(True)
+                    self.move_btn.set_sensitive(True)
+                    return
+
+            self.delete_btn.set_sensitive(False)
+            self.move_btn.set_sensitive(False)
+
 
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
-        self.check_col = CheckBoxColumn(transactions, self.on_check)
+        self.check_col = CheckBoxColumn(transactions, on_check)
 
         columns = [
             self.check_col,
@@ -157,16 +178,6 @@ class TransactionsForm(BuilderAware):
 
         self.window.set_title(('Приход за ' if inout else 'Расход за ') + date.strftime('%d.%m.%Y'))
 
-    def on_check(self, checks):
-        for k, v in checks.iteritems():
-            if k and v:
-                self.delete_btn.set_sensitive(True)
-                self.move_btn.set_sensitive(True)
-                return
-
-        self.delete_btn.set_sensitive(False)
-        self.move_btn.set_sensitive(False)
-
     def show(self):
         self.window.show_all()
         refresh_gui()
@@ -184,14 +195,11 @@ class TransactionsForm(BuilderAware):
             gtk.BUTTONS_YES_NO, "Удалить выделенные проводки?")
 
         if dlg.run() == gtk.RESPONSE_YES:
-            checks = self.check_col.checks
-            for r in self.transactions[:]:
-                if r._id and checks.get(r._id, False):
-                    self.transactions.remove(r)
-                    r.delete()
+            for r in self.check_col.checked_rows:
+                self.transactions.remove(r)
+                r.delete()
 
-            checks.clear()
-            self.on_check(checks)
+            self.check_col.clear()
             self.tv.refresh()
 
         dlg.destroy()

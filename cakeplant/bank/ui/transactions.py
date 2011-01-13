@@ -3,7 +3,8 @@ import gtk
 
 from taburet.ui.feedback import show_message
 
-from taburet.ui import BuilderAware, join_to_file_dir, idle, refresh_gui, guard, guarded_by
+from taburet.ui import (BuilderAware, join_to_file_dir, idle, refresh_gui, guard, guarded_by,
+    create_calendar_dialog)
 
 from taburet.ui.grid import (Grid, GridColumn, BadValueException,
     IntGridColumn, FloatGridColumn, DirtyRow, AutocompleteColumn)
@@ -110,6 +111,7 @@ class TransactionsForm(BuilderAware):
     def __init__(self, inout, other_account, date, last_in, last_out, on_close=None):
         BuilderAware.__init__(self, join_to_file_dir(__file__, "transactions.glade"))
         self.on_close = on_close
+        self.date = date
 
         self.transactions = transactions = sorted(other_account.transactions(
             date, date, income=inout, outcome=not inout), key=lambda r: r.num)
@@ -188,7 +190,20 @@ class TransactionsForm(BuilderAware):
             self.on_close()
 
     def on_move_btn_clicked(self, btn):
-        pass
+        dlg = create_calendar_dialog(parent=self.window, date=self.date)
+
+        if dlg.run() == gtk.RESPONSE_APPLY:
+            dt = dlg.get_date()
+            for r in self.check_col.checked_rows:
+                if self.date.date() != dt.date():
+                    self.transactions.remove(r)
+                r.date = dt
+                r.save()
+
+            self.check_col.clear()
+            self.tv.refresh()
+
+        dlg.destroy()
 
     def on_delete_btn_clicked(self, btn):
         dlg = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION,

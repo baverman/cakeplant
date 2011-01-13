@@ -3,7 +3,8 @@ import gtk
 
 from taburet.ui.feedback import show_message
 
-from taburet.ui import BuilderAware, join_to_file_dir, idle, refresh_gui
+from taburet.ui import BuilderAware, join_to_file_dir, idle, refresh_gui, guard, guarded_by
+
 from taburet.ui.grid import (Grid, GridColumn, BadValueException,
     IntGridColumn, FloatGridColumn, DirtyRow, AutocompleteColumn)
 
@@ -45,6 +46,33 @@ class AccountColumn(GridColumn):
         w = super(AccountColumn, self).create_widget(*args)
         self.completion.attach_to_entry(w)
         return w
+
+class CheckBoxColumn(GridColumn):
+    def __init__(self, model):
+        GridColumn.__init__(self, 'checked_state')
+        self.model = model
+        self.checks = {}
+
+    def create_widget(self, dirty_row):
+        e = gtk.CheckButton()
+        e.connect_after('clicked', self.on_clicked)
+        return e
+
+    @guarded_by('changing')
+    def on_clicked(self, chk):
+        self.checks[self.model[chk.row]._id] = chk.get_active()
+
+    @guard('changing')
+    def set_value(self, entry, row):
+        entry.set_active(self.checks.get(row._id, False))
+
+    def get_title_widget(self):
+        w = gtk.CheckButton()
+        w.props.can_focus = False
+        return w
+
+    def get_attach_flags(self):
+        return 0
 
 class TransactionsForm(BuilderAware):
     """glade-file: transactions.glade"""
@@ -89,6 +117,7 @@ class TransactionsForm(BuilderAware):
         choices = [(r._id, r.name) for _, r in accounts_walk(AccountsPlan().accounts(), True)]
 
         columns = [
+            CheckBoxColumn(transactions),
             IntGridColumn('num', label='№', editable=False, width=3),
             AccountColumn('from_acc' if inout else 'to_acc', choices, label='Счет', width=4),
             AutocompleteColumn('who', get_who_choice(), label='Контрагент', width=15),

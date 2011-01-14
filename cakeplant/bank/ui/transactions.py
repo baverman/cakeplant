@@ -14,7 +14,21 @@ from taburet.ui.completion import make_simple_completion
 from taburet.transactions import Transaction
 from taburet.accounts import AccountsPlan, accounts_walk
 
-from .. import get_who_choice, get_what_choice
+from cakeplant import bank
+
+cached_choices = [None, None]
+
+def get_who_choice():
+    if cached_choices[0] is None:
+        cached_choices[0] = bank.get_who_choice()
+
+    return cached_choices[0]
+
+def get_what_choice():
+    if cached_choices[1] is None:
+        cached_choices[1] = bank.get_what_choice()
+
+    return cached_choices[1]
 
 class AccountColumn(GridColumn):
     def __init__(self, attr, choices, **kwargs):
@@ -138,6 +152,12 @@ class TransactionsForm(BuilderAware):
                 row.num = last.inc()
 
             row.save()
+
+            if row.who:
+                cached_choices[0].append(unicode(row.who))
+
+            if row.what:
+                cached_choices[1].append(unicode(row.what))
 
             if hasattr(row, '_isnew_'):
                 del row._isnew_

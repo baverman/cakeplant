@@ -4,6 +4,7 @@ import taburet.utils
 import taburet.accounts
 from datetime import timedelta
 from itertools import groupby
+from collections import defaultdict
 
 from taburet.report import Workbook, group_sum
 
@@ -83,7 +84,8 @@ def get_pivot(account, date_from, date_to, inout):
         for who, gg in groupby(g, lambda t: t.who):
             for day, ggg in groupby(gg, lambda t: t.date.day):
                 days[day] = True
-                accounts.setdefault(aname, {}).setdefault(who, {})[day] = sum(t.amount for t in ggg)
+                accounts.setdefault(aname, {}).setdefault(who, defaultdict(int))[day] += sum(
+                    t.amount for t in ggg)
 
     days_indexes = dict((day, i) for i, day in enumerate(sorted(days.keys())))
 

@@ -5,9 +5,10 @@ import cPickle
 
 import couchdbkit
 from taburet import PackageManager
+from taburet.doctype import get_by_type
 
 from cakeplant.exp import Consignment
-from cakeplant.common import Customer
+from cakeplant.common import Customer, Good
 
 s = couchdbkit.Server()
 prefix = sys.argv[1]
@@ -17,6 +18,9 @@ pm.use('cakeplant.exp')
 pm.set_db(s.get_or_create_db(prefix + '_exp'), 'cakeplant.exp')
 pm.set_db(s.get_or_create_db(prefix + '_common'), 'cakeplant.common')
 pm.sync_design_documents()
+
+def tounicode(string):
+    return string.decode('utf-8')
 
 def traverse(filename):
     header = True
@@ -77,8 +81,8 @@ def create_order(date, idZac, num, driver, idWay, exp):
         num = 0
 
     return Consignment(num=num, date=date,
-        forwarder=exp.decode('utf8'), way=idWay.decode('utf8'),
-        driver=driver.decode('utf8'), dest=list(idZac))
+        forwarder=tounicode(exp), way=tounicode(idWay),
+        driver=tounicode(driver), dest=list(idZac))
 
 def make_orders(orders, ordata):
     counter = 0
@@ -151,8 +155,36 @@ def make_customers():
     cPickle.dump(oldzacs, open('oldzacs.pickle', 'w'))
     return oldzacs
 
-#make_customers()
-dump_orders(cPickle.load(open('oldzacs.pickle')))
-process_order_data(cPickle.load(open('orders.pickle')))
-make_orders(cPickle.load(open('orders.pickle')), cPickle.load(open('ordata.pickle')))
+def make_goods():
+    db = Good.get_db()
+    docs = []
+    for d in get_by_type(Good).all():
+        docs.append({'_id':d._id, '_rev':d._rev, '_deleted':True})
+    db.bulk_save(docs, True)
+    db.ensure_full_commit()
 
+    group_tags = {'1':'bread', '2':'cake', '3':'good'}
+
+    cat = {}
+    for id_cat, name, id_group in traverse('TKategories.csv'):
+        cat[id_cat] = name, id_group
+
+    for id_cat, name, weight, real_time, id, visible in traverse('TGoods.csv'):
+        good = Good()
+        good._id = 'g-' + id
+        if visible == '0':
+            good.hidden = True
+
+        good.weight = float(weight)
+        good.sell_time = tounicode(real_time)
+        good.name = u' '.join(map(unicode.strip, map(tounicode, [cat[id_cat][0], name])))
+        good.tags = [group_tags[cat[id_cat][1]]]
+
+        good.save()
+
+##make_customers()
+#dump_orders(cPickle.load(open('oldzacs.pickle')))
+#process_order_data(cPickle.load(open('orders.pickle')))
+#make_orders(cPickle.load(open('orders.pickle')), cPickle.load(open('ordata.pickle')))
+
+make_goods()

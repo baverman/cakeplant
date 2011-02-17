@@ -27,6 +27,15 @@ class Customer(Document):
         return (int(self._id.rpartition('-')[2]), pid)
 
 
+class Good(Document):
+    NotFound = ResourceNotFound
+
+    name = StringProperty(required=True)
+    weight = FloatProperty(required=True)
+    sell_time = StringProperty(required=True)
+    tags = ListProperty(default=[])
+
+
 class Price(Document):
     good = StringProperty(required=True)
     type = StringProperty(required=True)

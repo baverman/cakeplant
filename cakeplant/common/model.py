@@ -35,6 +35,9 @@ class Good(Document):
     sell_time = StringProperty(required=True)
     tags = ListProperty(default=[])
 
+    @property
+    def fullname(self):
+        return "%s %g" % (self.name, self.weight)
 
 class Price(Document):
     good = StringProperty(required=True)

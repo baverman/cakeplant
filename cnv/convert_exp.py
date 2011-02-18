@@ -157,10 +157,7 @@ def make_customers():
 
 def make_goods():
     db = Good.get_db()
-    docs = []
-    for d in get_by_type(Good).all():
-        docs.append({'_id':d._id, '_rev':d._rev, '_deleted':True})
-    db.bulk_save(docs, True)
+    db.bulk_delete(get_by_type(Good).all(), True)
     db.ensure_full_commit()
 
     group_tags = {'1':'bread', '2':'cake', '3':'good'}
